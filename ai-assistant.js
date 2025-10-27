@@ -571,7 +571,9 @@ async function executeActionsSequentially(actions) {
         } catch (error) {
             console.error(`Error executing action ${i + 1}: ${action}`, error);
             addMessage('assistant', `❌ Error executing action ${i + 1}: ${error.message}`);
-            // Continue with remaining actions even if one fails
+            // STOP the current set of actions when one fails to prevent dangerous continuation
+            addMessage('assistant', '🛑 **Action sequence stopped for safety**');
+            break; // Exit the loop to prevent executing remaining actions
         }
     }
 }
@@ -588,7 +590,7 @@ function executeBrowserActionAsync(action) {
         const webview = tabGroup && tabGroup.getActiveTab() ? tabGroup.getActiveTab().webview : null;
         let commandExecuted = false;
 
-        // Helper function for webview.executeJavaScript calls
+        // Helper function for webview.executeJavaScript calls with timeout and better error handling
         const executeWebviewScript = (script, messagePrefix = 'Executing action') => {
             if (!webview) {
                 const error = `Cannot execute browser action. Webview element not found.`;
@@ -597,19 +599,50 @@ function executeBrowserActionAsync(action) {
                 return;
             }
             
+            // Set a timeout to prevent hanging
+            const timeout = setTimeout(() => {
+                reject(new Error(`Action timeout: ${messagePrefix} took too long to complete`));
+            }, 10000); // 10 second timeout
+            
             webview.executeJavaScript(script).then(result => {
-                // Only add message if the script returns something useful
-                if (result && typeof result === 'string' && result.length > 0 && !result.startsWith('Element not found')) {
-                    addMessage('assistant', `${messagePrefix}: ${result}`);
-                } else if (result && result.startsWith('Element not found')) {
-                    addMessage('assistant', `❌ ${result}`);
-                    reject(new Error(result));
-                    return;
+                clearTimeout(timeout);
+                
+                // Handle different result types properly
+                if (result === null || result === undefined) {
+                    addMessage('assistant', `${messagePrefix} completed (no response)`);
+                    resolve('Action completed');
+                } else if (typeof result === 'string') {
+                    if (result.startsWith('Element not found') || result.startsWith('No elements found') || result.startsWith('Timeout:')) {
+                        addMessage('assistant', `❌ ${result}`);
+                        reject(new Error(result));
+                        return;
+                    } else if (result.startsWith('Error:') || result.startsWith('Cannot find')) {
+                        addMessage('assistant', `❌ ${result}`);
+                        reject(new Error(result));
+                        return;
+                    } else {
+                        addMessage('assistant', `${messagePrefix}: ${result}`);
+                        resolve(result);
+                    }
                 } else {
-                     addMessage('assistant', `${messagePrefix}...`);
+                    // Handle object results (like from Promise-based scripts)
+                    if (result && result.toString) {
+                        const resultStr = result.toString();
+                        if (resultStr.startsWith('Element not found') || resultStr.startsWith('Timeout:')) {
+                            addMessage('assistant', `❌ ${resultStr}`);
+                            reject(new Error(resultStr));
+                            return;
+                        } else {
+                            addMessage('assistant', `${messagePrefix}: ${resultStr}`);
+                            resolve(resultStr);
+                        }
+                    } else {
+                        addMessage('assistant', `${messagePrefix} completed`);
+                        resolve('Action completed');
+                    }
                 }
-                resolve(result);
             }).catch(error => {
+                clearTimeout(timeout);
                 const errorMessage = `Error executing action script: ${error.message}`;
                 addMessage('assistant', `❌ ${errorMessage}`);
                 reject(new Error(errorMessage));

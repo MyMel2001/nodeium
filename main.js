@@ -160,8 +160,8 @@ const regexPatterns = [
     }
   })
   
-  // and load the homepage of the app.
-  mainWindow.loadURL('https://personal-ai.nodemixaholic.com')
+  // and load the UI of the app.
+  mainWindow.loadFile('index.html')
 
   
   return mainWindow;

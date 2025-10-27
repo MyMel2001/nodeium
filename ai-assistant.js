@@ -365,9 +365,14 @@ You can help users with:
 - Searching the web (e.g., "search for cats")
 - Finding information on current page
 - Browser operations (back, forward, refresh)
+- Clicking buttons and links
+- Typing in forms and text fields
+- Interacting with page elements
 
 When you suggest browser actions, use this format:
 ACTION: [command]
+
+You can chain multiple actions together by using multiple ACTION: lines. Actions will be executed sequentially with a short delay between them.
 
 Available commands:
 - NAVIGATE: [url]
@@ -377,7 +382,19 @@ Available commands:
 - REFRESH
 - SCROLL: [up/down/top/bottom]
 - CLICK: [element description]
+- TYPE: [element description]|[text to type]
 - FIND: [text to find]
+- GET_ELEMENT_INFO: [element description]
+- WAIT_FOR_ELEMENT: [element description]
+- SELECT_OPTION: [element description]|[option text]
+- CHECKBOX: [element description]|[check/uncheck/toggle]
+
+For complex interactions, you can chain commands like:
+ACTION: NAVIGATE: https://example.com
+ACTION: WAIT_FOR_ELEMENT: login
+ACTION: TYPE: username|myuser
+ACTION: TYPE: password|mypass
+ACTION: CLICK: login button
 
 Be helpful and conversational!`
             },
@@ -416,11 +433,17 @@ Be helpful and conversational!`
         // Add AI response
         addMessage('assistant', aiResponse);
         
-        // Check if response contains an action
-        const actionMatch = aiResponse.match(/ACTION:\s*(.+)/i);
-        if (actionMatch) {
-            const action = actionMatch[1].trim();
-            executeBrowserAction(action);
+        // Check if response contains actions (support for chained commands)
+        const actionMatches = aiResponse.match(/ACTION:\s*(.+)/gi);
+        if (actionMatches) {
+            // Execute all actions in sequence
+            actionMatches.forEach((actionMatch, index) => {
+                const action = actionMatch.replace(/ACTION:\s*/i, '').trim();
+                // Add a small delay between chained actions for better reliability
+                setTimeout(() => {
+                    executeBrowserAction(action);
+                }, index * 500); // 500ms delay between each action
+            });
         }
         
     } catch (error) {
@@ -459,7 +482,7 @@ function executeBrowserAction(action) {
         }
         else if (action.toUpperCase().startsWith('SEARCH:')) {
             const query = action.substring(7).trim();
-            const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+            const searchUrl = `https://search.sparksammy.com/search?q=${encodeURIComponent(query)}`;
             document.getElementById('txtUrl').value = searchUrl;
             go();
             addMessage('assistant', `Searching for ${query}...`);
@@ -510,6 +533,353 @@ function executeBrowserAction(action) {
                     window.find(search);
                 `);
                 addMessage('assistant', `Searching for "${searchText}" on the page...`);
+            }
+        }
+        else if (action.toUpperCase().startsWith('CLICK:')) {
+            const elementDescription = action.substring(6).trim();
+            const webview = document.querySelector('webview');
+            if (webview) {
+                const clickScript = `
+                    (function() {
+                        const description = "${elementDescription.replace(/"/g, '\\"')}";
+                        
+                        // Try different strategies to find the element
+                        let element = null;
+                        
+                        // 1. Try exact text match
+                        const elements = document.querySelectorAll('*');
+                        for (let el of elements) {
+                            if (el.textContent && el.textContent.trim().toLowerCase() === description.toLowerCase()) {
+                                element = el;
+                                break;
+                            }
+                        }
+                        
+                        // 2. Try partial text match
+                        if (!element) {
+                            for (let el of elements) {
+                                if (el.textContent && el.textContent.toLowerCase().includes(description.toLowerCase())) {
+                                    element = el;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // 3. Try button/link with specific text
+                        if (!element) {
+                            const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"], [role="button"]');
+                            for (let btn of buttons) {
+                                if (btn.value && btn.value.toLowerCase().includes(description.toLowerCase())) {
+                                    element = btn;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // 4. Try by placeholder
+                        if (!element) {
+                            const inputs = document.querySelectorAll('input, textarea');
+                            for (let input of inputs) {
+                                if (input.placeholder && input.placeholder.toLowerCase().includes(description.toLowerCase())) {
+                                    element = input;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // 5. Try by ID or name
+                        if (!element) {
+                            element = document.getElementById(description) || document.getElementsByName(description)[0];
+                        }
+                        
+                        if (element) {
+                            element.click();
+                            return 'Clicked on: ' + description;
+                        } else {
+                            return 'Element not found: ' + description;
+                        }
+                    })();
+                `;
+                
+                webview.executeJavaScript(clickScript).then(result => {
+                    addMessage('assistant', result);
+                }).catch(error => {
+                    addMessage('assistant', `Error clicking element: ${error.message}`);
+                });
+            }
+        }
+        else if (action.toUpperCase().startsWith('TYPE:')) {
+            const parts = action.substring(5).trim().split('|');
+            if (parts.length === 2) {
+                const elementDescription = parts[0].trim();
+                const textToType = parts[1].trim();
+                const webview = document.querySelector('webview');
+                
+                if (webview) {
+                    const typeScript = `
+                        (function() {
+                            const description = "${elementDescription.replace(/"/g, '\\"')}";
+                            const text = "${textToType.replace(/"/g, '\\"')}";
+                            
+                            // Try to find the element
+                            let element = null;
+                            
+                            // 1. Try by placeholder
+                            const inputs = document.querySelectorAll('input, textarea');
+                            for (let input of inputs) {
+                                if (input.placeholder && input.placeholder.toLowerCase().includes(description.toLowerCase())) {
+                                    element = input;
+                                    break;
+                                }
+                            }
+                            
+                            // 2. Try by ID or name
+                            if (!element) {
+                                element = document.getElementById(description) || document.getElementsByName(description)[0];
+                            }
+                            
+                            // 3. Try by label text
+                            if (!element) {
+                                const labels = document.querySelectorAll('label');
+                                for (let label of labels) {
+                                    if (label.textContent && label.textContent.toLowerCase().includes(description.toLowerCase())) {
+                                        if (label.htmlFor) {
+                                            element = document.getElementById(label.htmlFor);
+                                        } else {
+                                            const firstInput = label.querySelector('input, textarea');
+                                            if (firstInput) element = firstInput;
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (element) {
+                                element.focus();
+                                element.value = text;
+                                element.dispatchEvent(new Event('input', { bubbles: true }));
+                                element.dispatchEvent(new Event('change', { bubbles: true }));
+                                return 'Typed in: ' + description;
+                            } else {
+                                return 'Element not found: ' + description;
+                            }
+                        })();
+                    `;
+                    
+                    webview.executeJavaScript(typeScript).then(result => {
+                        addMessage('assistant', result);
+                    }).catch(error => {
+                        addMessage('assistant', `Error typing in element: ${error.message}`);
+                    });
+                }
+            } else {
+                addMessage('assistant', 'Invalid TYPE command format. Use: TYPE: [element description]|[text to type]');
+            }
+        }
+        else if (action.toUpperCase().startsWith('GET_ELEMENT_INFO:')) {
+            const elementDescription = action.substring(16).trim();
+            const webview = document.querySelector('webview');
+            
+            if (webview) {
+                const infoScript = `
+                    (function() {
+                        const description = "${elementDescription.replace(/"/g, '\\"')}";
+                        
+                        // Find elements matching the description
+                        const elements = [];
+                        const allElements = document.querySelectorAll('*');
+                        
+                        for (let el of allElements) {
+                            if (el.textContent && el.textContent.toLowerCase().includes(description.toLowerCase())) {
+                                elements.push({
+                                    tagName: el.tagName,
+                                    id: el.id,
+                                    className: el.className,
+                                    text: el.textContent.trim().substring(0, 100),
+                                    type: el.type || 'N/A',
+                                    placeholder: el.placeholder || 'N/A'
+                                });
+                            }
+                        }
+                        
+                        if (elements.length > 0) {
+                            return 'Found ' + elements.length + ' elements matching "' + description + '": ' + JSON.stringify(elements.slice(0, 5));
+                        } else {
+                            return 'No elements found matching: ' + description;
+                        }
+                    })();
+                `;
+                
+                webview.executeJavaScript(infoScript).then(result => {
+                    addMessage('assistant', result);
+                }).catch(error => {
+                    addMessage('assistant', `Error getting element info: ${error.message}`);
+                });
+            }
+        }
+        else if (action.toUpperCase().startsWith('WAIT_FOR_ELEMENT:')) {
+            const elementDescription = action.substring(17).trim();
+            const webview = document.querySelector('webview');
+            
+            if (webview) {
+                const waitScript = `
+                    (function() {
+                        const description = "${elementDescription.replace(/"/g, '\\"')}";
+                        
+                        return new Promise((resolve) => {
+                            const checkElement = () => {
+                                const elements = document.querySelectorAll('*');
+                                for (let el of elements) {
+                                    if (el.textContent && el.textContent.toLowerCase().includes(description.toLowerCase())) {
+                                        resolve('Element found: ' + description);
+                                        return;
+                                    }
+                                }
+                                
+                                setTimeout(checkElement, 500);
+                            };
+                            
+                            checkElement();
+                            
+                            // Timeout after 10 seconds
+                            setTimeout(() => {
+                                resolve('Timeout: Element not found after 10 seconds: ' + description);
+                            }, 10000);
+                        });
+                    })();
+                `;
+                
+                webview.executeJavaScript(waitScript).then(result => {
+                    addMessage('assistant', result);
+                }).catch(error => {
+                    addMessage('assistant', `Error waiting for element: ${error.message}`);
+                });
+            }
+        }
+        else if (action.toUpperCase().startsWith('SELECT_OPTION:')) {
+            const parts = action.substring(13).trim().split('|');
+            if (parts.length === 2) {
+                const elementDescription = parts[0].trim();
+                const optionText = parts[1].trim();
+                const webview = document.querySelector('webview');
+                
+                if (webview) {
+                    const selectScript = `
+                        (function() {
+                            const description = "${elementDescription.replace(/"/g, '\\"')}";
+                            const option = "${optionText.replace(/"/g, '\\"')}";
+                            
+                            // Find select element
+                            let selectElement = null;
+                            
+                            // Try by ID or name
+                            selectElement = document.getElementById(description) || document.getElementsByName(description)[0];
+                            
+                            // Try by associated label
+                            if (!selectElement) {
+                                const labels = document.querySelectorAll('label');
+                                for (let label of labels) {
+                                    if (label.textContent && label.textContent.toLowerCase().includes(description.toLowerCase())) {
+                                        if (label.htmlFor) {
+                                            selectElement = document.getElementById(label.htmlFor);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (selectElement && selectElement.tagName === 'SELECT') {
+                                const options = selectElement.options;
+                                for (let i = 0; i < options.length; i++) {
+                                    if (options[i].text.toLowerCase().includes(option.toLowerCase())) {
+                                        selectElement.selectedIndex = i;
+                                        selectElement.dispatchEvent(new Event('change', { bubbles: true }));
+                                        return 'Selected option: ' + option + ' in ' + description;
+                                    }
+                                }
+                                return 'Option not found: ' + option;
+                            } else {
+                                return 'Select element not found: ' + description;
+                            }
+                        })();
+                    `;
+                    
+                    webview.executeJavaScript(selectScript).then(result => {
+                        addMessage('assistant', result);
+                    }).catch(error => {
+                        addMessage('assistant', `Error selecting option: ${error.message}`);
+                    });
+                }
+            } else {
+                addMessage('assistant', 'Invalid SELECT_OPTION command format. Use: SELECT_OPTION: [element description]|[option text]');
+            }
+        }
+        else if (action.toUpperCase().startsWith('CHECKBOX:')) {
+            const parts = action.substring(9).trim().split('|');
+            const elementDescription = parts[0].trim();
+            const actionType = parts[1] ? parts[1].trim().toLowerCase() : 'toggle';
+            const webview = document.querySelector('webview');
+            
+            if (webview) {
+                const checkboxScript = `
+                    (function() {
+                        const description = "${elementDescription.replace(/"/g, '\\"')}";
+                        const action = "${actionType}";
+                        
+                        // Find checkbox element
+                        let checkbox = null;
+                            
+                        // Try by ID or name
+                        checkbox = document.getElementById(description) || document.getElementsByName(description)[0];
+                        
+                        // Try by associated label
+                        if (!checkbox) {
+                            const labels = document.querySelectorAll('label');
+                            for (let label of labels) {
+                                if (label.textContent && label.textContent.toLowerCase().includes(description.toLowerCase())) {
+                                    if (label.htmlFor) {
+                                        checkbox = document.getElementById(label.htmlFor);
+                                    } else {
+                                        checkbox = label.querySelector('input[type="checkbox"]');
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Try by finding checkbox with text nearby
+                        if (!checkbox) {
+                            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                            for (let cb of checkboxes) {
+                                const parent = cb.closest('label') || cb.parentElement;
+                                if (parent && parent.textContent && parent.textContent.toLowerCase().includes(description.toLowerCase())) {
+                                    checkbox = cb;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (checkbox && checkbox.type === 'checkbox') {
+                            if (action === 'check') {
+                                checkbox.checked = true;
+                            } else if (action === 'uncheck') {
+                                checkbox.checked = false;
+                            } else {
+                                checkbox.checked = !checkbox.checked;
+                            }
+                            checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+                            return action + 'ed checkbox: ' + description;
+                        } else {
+                            return 'Checkbox not found: ' + description;
+                        }
+                    })();
+                `;
+                
+                webview.executeJavaScript(checkboxScript).then(result => {
+                    addMessage('assistant', result);
+                }).catch(error => {
+                    addMessage('assistant', `Error with checkbox: ${error.message}`);
+                });
             }
         }
         else {
@@ -574,10 +944,28 @@ Available commands:
 You can ask me to:
 • Navigate to websites (e.g., "go to wikipedia.org")
 • Search for information (e.g., "search for JavaScript tutorials")
-• Help with browser operations
+• Help with browser operations (back, forward, refresh)
 • Find information on current page
+• Click buttons and links (e.g., "click the login button")
+• Type in text fields (e.g., "type hello world in the search box")
+• Interact with forms (select options, check checkboxes)
+• Wait for elements to appear
 
-Just chat naturally and I'll help you browse the web!
+New page interaction features:
+• Click on any element by describing it
+• Type text into input fields and textareas
+• Get information about page elements
+• Wait for dynamic content to load
+• Select dropdown options
+• Check/uncheck checkboxes
+• Chain multiple actions together for complex workflows
+
+Example usage:
+• "Log me into Gmail" (AI will navigate, wait for elements, type credentials, click login)
+• "Fill out the contact form" (AI will find form fields and enter information)
+• "Search for cats and click the first result" (AI will search and interact with results)
+
+Just chat naturally and I'll help you browse and interact with web pages!
     `;
     addMessage('assistant', helpText.trim());
 }

@@ -60,12 +60,16 @@ function go() {
         url = searchPattern.replaceAll("!!!QUERY!!!", query)
     } else if (url.includes("https://news.google.com")) {
     	url = url.replaceAll("https://news.google.com", "https://osn.nodemixaholic.com")
-    } else if (url == "nn:passwords") {
+    } else if (url == "https://passwords/") {
     	url = "https://passy.nodemixaholic.com"
-    } else if (url == "nm:newtab" || url == "nm:ai") {
+    } else if (url == "https://newtab/" || url == "https://ai/") {
     	url = "https://personal-ai.nodemixaholic.com"
+    } else if (url == "https://casaos-main/") {
+    	url = "http://192.168.50.238:8012"
+    } else if (url == "https://jellyfin/") {
+    	url = "https://jelly.nodemixaholic.com"
     } else if (url.includes("google.com") && !url.includes("maps") && !url.includes("news") && !url.includes("webstore") && !url.includes("drive") && !url.includes("docs") && !url.includes("sheets") && !url.includes("slides") && !url.includes("mail")) {
-    	url = url.replaceAll("google.com", "search.sparksammy.com")
+    	url = url.replaceAll("google.com", "searx.sparksammy.com")
     }
     document.getElementById("txtUrl").value = ""
     browserFrame.loadURL(url, 

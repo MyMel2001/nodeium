@@ -127,3 +127,322 @@ webview {
   box-sizing: border-box; /* Ensures any padding or border inside the webview is included in the total size */
   display: block; /* Ensure it behaves as a block element */
 }
+
+/* AI Assistant Sidebar Styles */
+.sidebar {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100%;
+  background-color: #2c2c2c;
+  color: white;
+  transition: right 0.3s ease;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  border-left: 2px solid #444;
+}
+
+.sidebar.open {
+  right: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #444;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  color: #4CAF50;
+}
+
+#closeSidebar {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.sidebar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+#settingsBtn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+#settingsBtn:hover {
+  background-color: #444;
+  border-radius: 3px;
+}
+
+#closeSidebar:hover {
+  background-color: #444;
+  border-radius: 3px;
+}
+
+.chat-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  background-color: #2c2c2c;
+}
+
+.message {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.message.user {
+  background-color: #4CAF50;
+  margin-left: auto;
+  text-align: right;
+}
+
+.message.assistant {
+  background-color: #444;
+  margin-right: auto;
+}
+
+.chat-input-container {
+  display: flex;
+  padding: 15px;
+  background-color: #1a1a1a;
+  border-top: 1px solid #444;
+}
+
+#chatInput {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #333;
+  color: white;
+  margin-right: 10px;
+}
+
+#chatInput::placeholder {
+  color: #aaa;
+}
+
+#sendChatBtn {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#sendChatBtn:hover {
+  background-color: #45a049;
+}
+
+#aiAssistantBtn {
+  background-color: #9C27B0; /* Purple */
+  border: none;
+  color: white;
+  padding: 1% 1%;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 1.25rem;
+}
+
+#aiAssistantBtn:hover {
+  background-color: #7B1FA2;
+}
+
+/* Typing indicator animation */
+.typing-indicator span {
+  display: inline-block;
+  animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    opacity: 0.3;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* AI Settings Modal Styles */
+.settings-modal {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  z-index: 2000;
+}
+
+.settings-modal.show {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.settings-content {
+  background-color: #2c2c2c;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80%;
+  overflow-y: auto;
+  border: 1px solid #444;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #444;
+  border-radius: 8px 8px 0 0;
+}
+
+.settings-header h3 {
+  margin: 0;
+  color: #4CAF50;
+}
+
+#closeSettings {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+#closeSettings:hover {
+  background-color: #444;
+  border-radius: 3px;
+}
+
+.settings-body {
+  padding: 20px;
+}
+
+.setting-group {
+  margin-bottom: 20px;
+}
+
+.setting-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.setting-group input[type="text"],
+.setting-group input[type="password"],
+.setting-group input[type="number"],
+.setting-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background-color: #333;
+  color: white;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.setting-group input[type="range"] {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.setting-group input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.setting-group small {
+  display: block;
+  margin-top: 5px;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.setting-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.setting-actions button {
+  flex: 1;
+  min-width: 120px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+#testConnectionBtn {
+  background-color: #2196F3;
+  color: white;
+}
+
+#testConnectionBtn:hover {
+  background-color: #1976D2;
+}
+
+#saveSettingsBtn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+#saveSettingsBtn:hover {
+  background-color: #45a049;
+}
+
+#resetSettingsBtn {
+  background-color: #f44336;
+  color: white;
+}
+
+#resetSettingsBtn:hover {
+  background-color: #d32f2f;
+}

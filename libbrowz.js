@@ -69,7 +69,7 @@ function go() {
     } else if (url == "https://jellyfin/") {
     	url = "https://jelly.nodemixaholic.com"
     } else if (url.includes("google.com") && !url.includes("maps") && !url.includes("news") && !url.includes("webstore") && !url.includes("drive") && !url.includes("docs") && !url.includes("sheets") && !url.includes("slides") && !url.includes("mail")) {
-    	url = url.replaceAll("google.com", "searx.sparksammy.com")
+    	url = url.replaceAll("google.com", "search.sparksammy.com")
     }
     document.getElementById("txtUrl").value = ""
     browserFrame.loadURL(url, 

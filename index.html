@@ -16,7 +16,91 @@
     <button onclick="stop(); return false;" id="stopBtn">🛑</button> 
     <button onclick="back(); return false;" id="backBtn">⬅️</button>
     <button onclick="forward(); return false;" id="forwardBtn">➡️</button>
+    <button id="aiAssistantBtn" onclick="toggleAISidebar(); return false;">🤖</button>
     </div>
+    
+    <!-- AI Assistant Sidebar -->
+    <div id="aiSidebar" class="sidebar">
+      <div class="sidebar-header">
+        <h3>AI Assistant</h3>
+        <div class="sidebar-actions">
+          <button id="settingsBtn" onclick="toggleAISettings(); return false;">⚙️</button>
+          <button id="closeSidebar" onclick="toggleAISidebar(); return false;">✕</button>
+        </div>
+      </div>
+      
+      <!-- AI Settings Modal -->
+      <div id="aiSettingsModal" class="settings-modal">
+        <div class="settings-content">
+          <div class="settings-header">
+            <h3>AI Assistant Settings</h3>
+            <button id="closeSettings" onclick="toggleAISettings(); return false;">✕</button>
+          </div>
+          <div class="settings-body">
+            <div class="setting-group">
+              <label for="apiKeyInput">API Key:</label>
+              <input type="password" id="apiKeyInput" placeholder="Enter your OpenAI API key">
+              <small>Your API key is stored locally and securely</small>
+            </div>
+            
+            <div class="setting-group">
+              <label for="apiUrlInput">API Endpoint:</label>
+              <input type="text" id="apiUrlInput" placeholder="https://api.openai.com/v1/chat/completions">
+              <small>Use OpenAI-compatible endpoints (works with local models too)</small>
+            </div>
+            
+            <div class="setting-group">
+              <label for="modelSelect">Model:</label>
+              <select id="modelSelect">
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                <option value="claude-3-haiku">Claude 3 Haiku</option>
+                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                <option value="llama-3-8b">Llama 3 8B</option>
+                <option value="llama-3-70b">Llama 3 70B</option>
+                <option value="custom">Custom Model</option>
+              </select>
+              <input type="text" id="customModelInput" placeholder="Enter custom model name" style="display:none; margin-top:10px;">
+            </div>
+            
+            <div class="setting-group">
+              <label for="temperatureSlider">Temperature: <span id="temperatureValue">0.7</span></label>
+              <input type="range" id="temperatureSlider" min="0" max="2" step="0.1" value="0.7">
+              <small>Higher values make responses more creative, lower values more focused</small>
+            </div>
+            
+            <div class="setting-group">
+              <label for="maxTokensInput">Max Tokens:</label>
+              <input type="number" id="maxTokensInput" min="100" max="4000" value="1000">
+              <small>Maximum length of AI responses</small>
+            </div>
+            
+            <div class="setting-group">
+              <label>
+                <input type="checkbox" id="contextAwareCheckbox" checked>
+                Enable browser context awareness
+              </label>
+              <small>Allow AI to see current page URL and title</small>
+            </div>
+            
+            <div class="setting-actions">
+              <button id="testConnectionBtn" onclick="testAIConnection(); return false;">Test Connection</button>
+              <button id="saveSettingsBtn" onclick="saveAISettings(); return false;">Save Settings</button>
+              <button id="resetSettingsBtn" onclick="resetAISettings(); return false;">Reset to Defaults</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-container">
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input-container">
+          <input type="text" id="chatInput" placeholder="What do you want to do today?" onkeypress="handleChatKeyPress(event)">
+          <button id="sendChatBtn" onclick="sendChatMessage(); return false;">Send</button>
+        </div>
+      </div>
+    </div>
+    
     <div id="whProtection">
     <tab-group new-tab-button="true" sortable="true">
     <webview id="foo" autosize plugins disablewebsecurity></webview>
@@ -26,5 +110,6 @@
     <script type="text/javascript" src="./userscript/userscripts.js"></script>
     <script type="text/javascript" src="./config.js"></script>
     <script type="text/javascript" src="./libbrowz.js"></script>
+    <script type="text/javascript" src="./ai-assistant.js"></script>
   </body>
 </html>

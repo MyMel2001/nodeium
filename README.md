@@ -33,7 +33,7 @@ A basic Electron application needs just these files:
 
 ## License
 
-[SPL-R5](https://github.com/Sneed-Group/sneedium/blob/master/LICENSE.md)
+[SPL-R5](LICENSE.md)
 
 ## Disclaimer
 

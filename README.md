@@ -1,8 +1,10 @@
 <img src="https://github.com/Sneed-Group/sneedium/blob/master/logo.png?raw=true" align="right" width="15%"/>
 
-# Sneedium
+# Nodeium
 
 A basic web browser in Electron. ***With a functioning adblocker and privacy redirection technologies!***
+
+Note: This is a browser made for my own enjoyment, feel free to fork it.
 
 [![Download latest build.](https://github.com/Sneed-Group/sneedium/blob/master/download.png?raw=true)](https://github.com/Sneed-Group/sneedium/releases)
 

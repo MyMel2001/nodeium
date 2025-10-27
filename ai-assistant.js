@@ -462,17 +462,30 @@ async function sendChatMessage() {
         // Remove typing indicator
         removeTypingIndicator(typingId);
         
-        // Add AI response
-        addMessage('assistant', aiResponse);
-        
         // Check if response contains actions (support for chained commands)
         // Use a more robust regex that ignores case and extracts the action content cleanly.
-        const actionMatches = [...aiResponse.matchAll(/ACTION:\s*(.+)/gi)]; 
+        const actionMatches = [...aiResponse.matchAll(/ACTION:\s*(.+)/gi)];
+        
+        // Split the response into conversational part and actions
+        let conversationalResponse = aiResponse;
+        let actions = [];
         
         if (actionMatches.length > 0) {
-            // Execute all actions in sequence
-            actionMatches.forEach((match, index) => {
-                const action = match[1].trim(); // match[1] is the captured group: (.+)
+            // Extract actions from the response
+            actions = actionMatches.map(match => match[1].trim());
+            
+            // Remove ACTION: lines from the conversational response
+            conversationalResponse = aiResponse.replace(/ACTION:\s*(.+)/gi, '').trim();
+        }
+        
+        // Add the conversational response (without ACTION: lines)
+        if (conversationalResponse) {
+            addMessage('assistant', conversationalResponse);
+        }
+        
+        // Execute all actions in sequence
+        if (actions.length > 0) {
+            actions.forEach((action, index) => {
                 // Add a small delay between chained actions for better reliability
                 setTimeout(() => {
                     executeBrowserAction(action);
@@ -552,21 +565,27 @@ function handleLocalCommands(message) {
  * @returns {{url: string, title: string}}
  */
 function getBrowserContext() {
-    // Assuming 'webview' is the correct selector for the web content container
-    const webview = document.querySelector('webview'); 
+    let tabGroup = document.querySelector("tab-group");
+    const webview = tabGroup && tabGroup.getActiveTab() ? tabGroup.getActiveTab().webview : null;
     let url = 'No page loaded or webview not found';
     let title = 'No title';
     
     try {
-        // These methods are specific to the Electron/Chromium webview tag
-        if (webview && typeof webview.getURL === 'function') {
-            url = webview.getURL() || url;
-        }
-        if (webview && typeof webview.getTitle === 'function') {
-            title = webview.getTitle() || title;
+        // Check if webview exists and has loaded content
+        if (webview) {
+            // Check if the webview has a src attribute or getURL() returns a valid URL
+            const currentUrl = webview.getURL();
+            if (currentUrl && currentUrl !== 'about:blank') {
+                url = currentUrl;
+                title = webview.getTitle() || title;
+            } else if (webview.src && webview.src !== 'about:blank') {
+                url = webview.src;
+                title = 'Loading...';
+            }
         }
     } catch (e) {
-        console.error('Error getting browser context:', e);
+        // Suppress this specific error during chat, as it clutters the console
+        // console.error('Error getting browser context:', e);
     }
     
     return { url, title };
@@ -617,7 +636,8 @@ Be helpful, concise, and ONLY use the commands provided. Do not invent new comma
 function executeBrowserAction(action) {
     // Standardize action to uppercase and remove leading/trailing whitespace for reliable parsing
     const normalizedAction = action.toUpperCase().trim();
-    const webview = document.querySelector('webview');
+    let tabGroup = document.querySelector("tab-group");
+    const webview = tabGroup.getActiveTab().webview;
     let commandExecuted = false;
 
     // Helper function for webview.executeJavaScript calls
@@ -655,7 +675,7 @@ function executeBrowserAction(action) {
         }
         else if (normalizedAction.startsWith('SEARCH:')) {
             const query = action.substring(7).trim();
-            const searchUrl = `https://search.sparksammy.com/search?q=${encodeURIComponent(query)}`;
+            const searchUrl = `https://search.sparksammy.com/search.php?q=${encodeURIComponent(query)}`;
             // Assuming 'txtUrl' and 'go()' are global application functions/elements
             if (typeof go === 'function' && document.getElementById('txtUrl')) {
                 document.getElementById('txtUrl').value = searchUrl;

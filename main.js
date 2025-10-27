@@ -23,7 +23,10 @@ async function enableGoodies(s) {
     'https://easylist.to/easylist/easyprivacy.txt',
     'https://easylist-downloads.adblockplus.org/antiadblockfilters.txt',
     'https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt',
-    'https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.plus.txt'
+    'https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.plus.txt',
+    'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/filters.txt',
+    'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/quick-fixes.txt',
+    'https://github.com/uBlockOrigin/uAssets/raw/refs/heads/master/filters/unbreak.txt'
   ])
   blocker.enableBlockingInSession(s);
   extensions = new ElectronChromeExtensions({
@@ -157,8 +160,8 @@ const regexPatterns = [
     }
   })
   
-  // and load the index.html of the app.
-  mainWindow.loadFile('index.html')
+  // and load the homepage of the app.
+  mainWindow.loadURL('https://personal-ai.nodemixaholic.com')
 
   
   return mainWindow;

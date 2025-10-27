@@ -29,9 +29,13 @@ async function enableGoodies(s) {
     'https://github.com/uBlockOrigin/uAssets/raw/refs/heads/master/filters/unbreak.txt'
   ])
   blocker.enableBlockingInSession(s);
-  extensions = new ElectronChromeExtensions({
+  try {
+    extensions = new ElectronChromeExtensions({
     session: s
   })
+  } catch {
+    console.log("!?!")
+  }
 }
 
 // 0.0.0.0 day fix

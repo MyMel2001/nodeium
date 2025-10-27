@@ -58,14 +58,14 @@ function createWindow () {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webviewTag: true,
-      devTools: false,
-      nodeIntegration: true,
+      devTools: true,
+      nodeIntegration: false,
       sandbox: true,
       contextIsolation: true
     }
   })
 
-  mainWindow.removeMenu()
+  //mainWindow.removeMenu()
   mainWindow.setMinimumSize(1000, 300)
 
   

@@ -17,7 +17,7 @@
     "tutorial",
     "demo"
   ],
-  "author": "Sneed Group",
+  "author": "Sammy L",
   "license": "SPL-R5",
   "devDependencies": {
     "@electron-forge/cli": "^6.0.5",

@@ -48,8 +48,8 @@ function go() {
     let browser = tabGroup.getActiveTab()
     url = normalizeUrl(document.getElementById("txtUrl").value)
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
-    	url = url.replaceAll("youtube.com", "invidious.nerdvpn.de")
-    	url = url.replaceAll("youtu.be", "invidious.nerdvpn.de")
+    	url = url.replaceAll("youtube.com", "boobtube.nodemixaholic.com")
+    	url = url.replaceAll("youtu.be", "boobtube.nodemixaholic.com")
     } else if (url.includes("google.com/search?q") || url.includes("google.com/?q")) {
         // Define the URL object
         const serachUrlObj = new URL(url);
@@ -59,7 +59,11 @@ function go() {
         const searchPattern = "https://search.sparksammy.com/search.php?q=!!!QUERY!!!&p=0&t=0";
         url = searchPattern.replaceAll("!!!QUERY!!!", query)
     } else if (url.includes("https://news.google.com")) {
-    	url = url.replaceAll("https://news.google.com", "http://68k.news")
+    	url = url.replaceAll("https://news.google.com", "https://osn.nodemixaholic.com")
+    } else if (url == "nn:passwords") {
+    	url = "https://passy.nodemixaholic.com"
+    } else if (url == "nm:newtab" || url == "nm:ai") {
+    	url = "https://personal-ai.nodemixaholic.com"
     } else if (url.includes("google.com") && !url.includes("maps") && !url.includes("news") && !url.includes("webstore") && !url.includes("drive") && !url.includes("docs") && !url.includes("sheets") && !url.includes("slides") && !url.includes("mail")) {
     	url = url.replaceAll("google.com", "search.sparksammy.com")
     }

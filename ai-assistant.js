@@ -483,14 +483,9 @@ async function sendChatMessage() {
             addMessage('assistant', conversationalResponse);
         }
         
-        // Execute all actions in sequence
+        // Execute all actions in sequence using the new async function
         if (actions.length > 0) {
-            actions.forEach((action, index) => {
-                // Add a small delay between chained actions for better reliability
-                setTimeout(() => {
-                    executeBrowserAction(action);
-                }, index * 500); // 500ms delay between each action
-            });
+            executeActionsSequentially(actions);
         }
         
     } catch (error) {
@@ -559,6 +554,238 @@ function handleLocalCommands(message) {
 // =================================================================
 // 3. Browser Context and Action Execution
 // =================================================================
+
+/**
+ * Execute multiple actions sequentially with proper error handling.
+ * @param {string[]} actions - Array of action strings to execute in order.
+ */
+async function executeActionsSequentially(actions) {
+    for (let i = 0; i < actions.length; i++) {
+        const action = actions[i].trim();
+        try {
+            await executeBrowserActionAsync(action);
+            // Add a small delay between actions to ensure proper sequencing
+            if (i < actions.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+        } catch (error) {
+            console.error(`Error executing action ${i + 1}: ${action}`, error);
+            addMessage('assistant', `❌ Error executing action ${i + 1}: ${error.message}`);
+            // Continue with remaining actions even if one fails
+        }
+    }
+}
+
+/**
+ * Execute a single browser action command asynchronously.
+ * @param {string} action - The raw action command string (e.g., 'NAVIGATE: https://...')
+ * @returns {Promise} Promise that resolves when the action is complete
+ */
+function executeBrowserActionAsync(action) {
+    return new Promise((resolve, reject) => {
+        const normalizedAction = action.toUpperCase().trim();
+        let tabGroup = document.querySelector("tab-group");
+        const webview = tabGroup && tabGroup.getActiveTab() ? tabGroup.getActiveTab().webview : null;
+        let commandExecuted = false;
+
+        // Helper function for webview.executeJavaScript calls
+        const executeWebviewScript = (script, messagePrefix = 'Executing action') => {
+            if (!webview) {
+                const error = `Cannot execute browser action. Webview element not found.`;
+                addMessage('assistant', `⚠️ ${error}`);
+                reject(new Error(error));
+                return;
+            }
+            
+            webview.executeJavaScript(script).then(result => {
+                // Only add message if the script returns something useful
+                if (result && typeof result === 'string' && result.length > 0 && !result.startsWith('Element not found')) {
+                    addMessage('assistant', `${messagePrefix}: ${result}`);
+                } else if (result && result.startsWith('Element not found')) {
+                    addMessage('assistant', `❌ ${result}`);
+                    reject(new Error(result));
+                    return;
+                } else {
+                     addMessage('assistant', `${messagePrefix}...`);
+                }
+                resolve(result);
+            }).catch(error => {
+                const errorMessage = `Error executing action script: ${error.message}`;
+                addMessage('assistant', `❌ ${errorMessage}`);
+                reject(new Error(errorMessage));
+            });
+        };
+
+        try {
+            if (normalizedAction.startsWith('NAVIGATE:')) {
+                const url = action.substring(9).trim();
+                if (typeof go === 'function' && document.getElementById('txtUrl')) {
+                    document.getElementById('txtUrl').value = url;
+                    go();
+                    addMessage('assistant', `🌐 Navigating to **${url}**...`);
+                    commandExecuted = true;
+                    // Add a delay to allow navigation to start
+                    setTimeout(() => resolve('Navigation initiated'), 500);
+                } else {
+                    const error = 'Cannot NAVIGATE. Required application functions or elements are missing.';
+                    addMessage('assistant', `⚠️ ${error}`);
+                    reject(new Error(error));
+                }
+            }
+            else if (normalizedAction.startsWith('SEARCH:')) {
+                const query = action.substring(7).trim();
+                const searchUrl = `https://search.sparksammy.com/search.php?q=${encodeURIComponent(query)}`;
+                if (typeof go === 'function' && document.getElementById('txtUrl')) {
+                    document.getElementById('txtUrl').value = searchUrl;
+                    go();
+                    addMessage('assistant', `🔍 Searching for **${query}**...`);
+                    commandExecuted = true;
+                    // Add a delay to allow search to start
+                    setTimeout(() => resolve('Search initiated'), 500);
+                } else {
+                    const error = 'Cannot SEARCH. Required application functions or elements are missing.';
+                    addMessage('assistant', `⚠️ ${error}`);
+                    reject(new Error(error));
+                }
+            }
+            else if (normalizedAction === 'BACK') {
+                if (typeof back === 'function') {
+                    back();
+                    addMessage('assistant', '⬅️ Going back...');
+                    commandExecuted = true;
+                    resolve('Back executed');
+                } else {
+                    const error = 'BACK function not available';
+                    reject(new Error(error));
+                }
+            }
+            else if (normalizedAction === 'FORWARD') {
+                if (typeof forward === 'function') {
+                    forward();
+                    addMessage('assistant', '➡️ Going forward...');
+                    commandExecuted = true;
+                    resolve('Forward executed');
+                } else {
+                    const error = 'FORWARD function not available';
+                    reject(new Error(error));
+                }
+            }
+            else if (normalizedAction === 'REFRESH') {
+                if (typeof refresh === 'function') {
+                    refresh();
+                    addMessage('assistant', '🔄 Refreshing page...');
+                    commandExecuted = true;
+                    resolve('Refresh executed');
+                } else {
+                    const error = 'REFRESH function not available';
+                    reject(new Error(error));
+                }
+            }
+            else if (normalizedAction.startsWith('SCROLL:')) {
+                const direction = action.substring(7).trim().toLowerCase();
+                let scrollScript = '';
+                switch(direction) {
+                    case 'up':
+                        scrollScript = 'window.scrollBy(0, -500); "Scrolled Up"';
+                        break;
+                    case 'down':
+                        scrollScript = 'window.scrollBy(0, 500); "Scrolled Down"';
+                        break;
+                    case 'top':
+                        scrollScript = 'window.scrollTo(0, 0); "Scrolled to Top"';
+                        break;
+                    case 'bottom':
+                        scrollScript = 'window.scrollTo(0, document.body.scrollHeight); "Scrolled to Bottom"';
+                        break;
+                }
+                if (scrollScript) {
+                    executeWebviewScript(scrollScript, `Scrolling ${direction}`);
+                    commandExecuted = true;
+                } else {
+                     const error = `SCROLL: Invalid direction specified: ${direction}`;
+                     addMessage('assistant', `⚠️ ${error}`);
+                     reject(new Error(error));
+                }
+            }
+            else if (normalizedAction.startsWith('FIND:')) {
+                const searchText = action.substring(5).trim();
+                const findScript = `
+                    const search = "${searchText.replace(/"/g, '\\"')}";
+                    window.find(search);
+                    'Finding text: ${searchText}'
+                `;
+                executeWebviewScript(findScript, `Finding text: **${searchText}**`);
+                commandExecuted = true;
+            }
+            else if (normalizedAction.startsWith('CLICK:')) {
+                const elementDescription = action.substring(6).trim();
+                const clickScript = createBrowserActionScript('click', elementDescription);
+                executeWebviewScript(clickScript, `Attempting to click: **${elementDescription}**`);
+                commandExecuted = true;
+            }
+            else if (normalizedAction.startsWith('TYPE:')) {
+                const parts = action.substring(5).trim().split('|');
+                if (parts.length === 2) {
+                    const elementDescription = parts[0].trim();
+                    const textToType = parts[1].trim();
+                    const typeScript = createBrowserActionScript('type', elementDescription, textToType);
+                    executeWebviewScript(typeScript, `Attempting to type in: **${elementDescription}**`);
+                    commandExecuted = true;
+                } else {
+                    const error = 'Invalid TYPE command format. Use: TYPE: [element description]|[text to type]';
+                    addMessage('assistant', `⚠️ ${error}`);
+                    reject(new Error(error));
+                }
+            }
+            else if (normalizedAction.startsWith('GET_ELEMENT_INFO:')) {
+                const elementDescription = action.substring(17).trim();
+                const infoScript = createBrowserActionScript('info', elementDescription);
+                executeWebviewScript(infoScript, `Getting info for: **${elementDescription}**`);
+                commandExecuted = true;
+            }
+            else if (normalizedAction.startsWith('WAIT_FOR_ELEMENT:')) {
+                 const elementDescription = action.substring(17).trim();
+                 const waitScript = createBrowserActionScript('wait', elementDescription);
+                 executeWebviewScript(waitScript, `Waiting for element: **${elementDescription}**`);
+                 commandExecuted = true;
+            }
+            else if (normalizedAction.startsWith('SELECT_OPTION:')) {
+                const parts = action.substring(14).trim().split('|');
+                if (parts.length === 2) {
+                    const elementDescription = parts[0].trim();
+                    const optionText = parts[1].trim();
+                    const selectScript = createBrowserActionScript('select', elementDescription, optionText);
+                    executeWebviewScript(selectScript, `Attempting to select option: **${optionText}**`);
+                    commandExecuted = true;
+                } else {
+                    const error = 'Invalid SELECT_OPTION command format. Use: SELECT_OPTION: [element description]|[option text]';
+                    addMessage('assistant', `⚠️ ${error}`);
+                    reject(new Error(error));
+                }
+            }
+            else if (normalizedAction.startsWith('CHECKBOX:')) {
+                const parts = action.substring(9).trim().split('|');
+                const elementDescription = parts[0].trim();
+                const actionType = parts[1] ? parts[1].trim().toLowerCase() : 'toggle';
+                
+                const checkboxScript = createBrowserActionScript('checkbox', elementDescription, actionType);
+                executeWebviewScript(checkboxScript, `Attempting to **${actionType}** checkbox: **${elementDescription}**`);
+                commandExecuted = true;
+            }
+
+            // Final catch for unknown command
+            if (!commandExecuted) {
+                const error = `Unknown action: **${action}**`;
+                addMessage('assistant', `⚠️ ${error}`);
+                reject(new Error(error));
+            }
+        } catch (error) {
+            console.error('Error executing browser action:', error);
+            addMessage('assistant', `❌ Critical error executing action: ${error.message}`);
+            reject(error);
+        }
+    });
+}
 
 /**
  * Get the current browser context (URL and Title) from the webview.

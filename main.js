@@ -3,7 +3,7 @@ const {app, BrowserWindow, session, ipcMain} = require('electron')
 const path = require('path')
 const fetch = require("cross-fetch")
 const { ElectronChromeExtensions } = require('electron-chrome-extensions')
-const { ElectronBlocker } = require('@cliqz/adblocker-electron');
+const { ElectronBlocker } = require('@ghostery/adblocker-electron');
 const http = require('http');
 const { createProxy } = require('proxy');
 

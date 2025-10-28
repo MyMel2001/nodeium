@@ -660,16 +660,31 @@ function executeBrowserActionAsync(action) {
                         resolve(result);
                     }
                 } else {
-                    // Handle object results (like from Promise-based scripts)
-                    if (result && result.toString) {
-                        const resultStr = result.toString();
-                        if (resultStr.startsWith('Element not found') || resultStr.startsWith('Timeout:')) {
-                            addMessage('assistant', `❌ ${resultStr}`);
-                            reject(new Error(resultStr));
-                            return;
+                    // Handle object results (like from Promise-based scripts or DOM elements)
+                    if (result && typeof result === 'object') {
+                        // Check if it's a DOM element
+                        if (result.nodeType !== undefined) {
+                            // It's a DOM element, provide useful information instead of [object Object]
+                            const elementInfo = `Found element: ${result.tagName}${result.id ? '#' + result.id : ''}${result.className ? '.' + result.className.split(' ')[0] : ''}`;
+                            addMessage('assistant', `${messagePrefix}: ${elementInfo}`);
+                            resolve(elementInfo);
+                        } else if (result.toString) {
+                            const resultStr = result.toString();
+                            // Avoid showing [object Object] for generic objects
+                            if (resultStr === '[object Object]') {
+                                addMessage('assistant', `${messagePrefix} completed`);
+                                resolve('Action completed');
+                            } else if (resultStr.startsWith('Element not found') || resultStr.startsWith('Timeout:')) {
+                                addMessage('assistant', `❌ ${resultStr}`);
+                                reject(new Error(resultStr));
+                                return;
+                            } else {
+                                addMessage('assistant', `${messagePrefix}: ${resultStr}`);
+                                resolve(resultStr);
+                            }
                         } else {
-                            addMessage('assistant', `${messagePrefix}: ${resultStr}`);
-                            resolve(resultStr);
+                            addMessage('assistant', `${messagePrefix} completed`);
+                            resolve('Action completed');
                         }
                     } else {
                         addMessage('assistant', `${messagePrefix} completed`);
@@ -942,13 +957,25 @@ function executeBrowserAction(action) {
             return;
         }
         webview.executeJavaScript(script).then(result => {
-            // Only add message if the script returns something useful, otherwise, the prefix is enough
+            // Handle different result types properly to avoid [object Object] messages
             if (result && typeof result === 'string' && result.length > 0 && !result.startsWith('Element not found')) {
                 addMessage('assistant', `${messagePrefix}: ${result}`);
             } else if (result && result.startsWith('Element not found')) {
                 addMessage('assistant', `❌ ${result}`);
+            } else if (result && typeof result === 'object') {
+                // Check if it's a DOM element
+                if (result.nodeType !== undefined) {
+                    // It's a DOM element, provide useful information instead of [object Object]
+                    const elementInfo = `Found element: ${result.tagName}${result.id ? '#' + result.id : ''}${result.className ? '.' + result.className.split(' ')[0] : ''}`;
+                    addMessage('assistant', `${messagePrefix}: ${elementInfo}`);
+                } else if (result.toString && result.toString() !== '[object Object]') {
+                    const resultStr = result.toString();
+                    addMessage('assistant', `${messagePrefix}: ${resultStr}`);
+                } else {
+                    addMessage('assistant', `${messagePrefix} completed`);
+                }
             } else {
-                 addMessage('assistant', `${messagePrefix}...`);
+                 addMessage('assistant', `${messagePrefix} completed`);
             }
         }).catch(error => {
             addMessage('assistant', `❌ Error executing action script: ${error.message}`);
@@ -1114,74 +1141,68 @@ function createBrowserActionScript(actionType, description, value = '') {
     const escapedDescription = description.replace(/"/g, '\\"');
     const escapedValue = value.replace(/"/g, '\\"');
 
-    // Utility function to find an element based on description
-    const findElementScript = `
-        let element = null;
-        const description = "${escapedDescription}".toLowerCase();
-        const allElements = document.querySelectorAll('*');
-        
-        // 1. Try by ID
-        if (!element) {
-            element = document.getElementById("${escapedDescription}");
-        }
-
-        // 2. Try by exact text/value match (buttons, links)
-        if (!element) {
-            for (let el of allElements) {
-                const textContent = (el.textContent || '').trim().toLowerCase();
-                const valueContent = (el.value || '').trim().toLowerCase();
-                if (textContent === description || valueContent === description) {
-                    element = el;
-                    break;
-                }
-            }
-        }
-        
-        // 3. Try by placeholder
-        if (!element) {
-            const inputs = document.querySelectorAll('input, textarea');
-            for (let input of inputs) {
-                if (input.placeholder && input.placeholder.toLowerCase().includes(description)) {
-                    element = input;
-                    break;
-                }
-            }
-        }
-        
-        // 4. Try by partial text match (links, buttons, generic elements)
-        if (!element) {
-            for (let el of allElements) {
-                if ((el.textContent || '').toLowerCase().includes(description)) {
-                    element = el;
-                    break;
-                }
-            }
-        }
-        
-        // 5. Try by associated label text
-        if (!element) {
-            const labels = document.querySelectorAll('label');
-            for (let label of labels) {
-                if ((label.textContent || '').toLowerCase().includes(description)) {
-                    if (label.htmlFor) {
-                        element = document.getElementById(label.htmlFor);
-                    } else {
-                        const firstInput = label.querySelector('input, textarea, select');
-                        if (firstInput) element = firstInput;
-                    }
-                    if (element) break;
-                }
-            }
-        }
-
-        return element;
-    `;
 
     switch (actionType) {
         case 'click':
             return `
                 (function() {
-                    ${findElementScript}
+                    let element = null;
+                    const description = "${escapedDescription}".toLowerCase();
+                    const allElements = document.querySelectorAll('*');
+                    
+                    // 1. Try by ID
+                    if (!element) {
+                        element = document.getElementById("${escapedDescription}");
+                    }
+
+                    // 2. Try by exact text/value match (buttons, links)
+                    if (!element) {
+                        for (let el of allElements) {
+                            const textContent = (el.textContent || '').trim().toLowerCase();
+                            const valueContent = (el.value || '').trim().toLowerCase();
+                            if (textContent === description || valueContent === description) {
+                                element = el;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 3. Try by placeholder
+                    if (!element) {
+                        const inputs = document.querySelectorAll('input, textarea');
+                        for (let input of inputs) {
+                            if (input.placeholder && input.placeholder.toLowerCase().includes(description)) {
+                                element = input;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 4. Try by partial text match (links, buttons, generic elements)
+                    if (!element) {
+                        for (let el of allElements) {
+                            if ((el.textContent || '').toLowerCase().includes(description)) {
+                                element = el;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 5. Try by associated label text
+                    if (!element) {
+                        const labels = document.querySelectorAll('label');
+                        for (let label of labels) {
+                            if ((label.textContent || '').toLowerCase().includes(description)) {
+                                if (label.htmlFor) {
+                                    element = document.getElementById(label.htmlFor);
+                                } else {
+                                    const firstInput = label.querySelector('input, textarea, select');
+                                    if (firstInput) element = firstInput;
+                                }
+                                if (element) break;
+                            }
+                        }
+                    }
 
                     if (element) {
                         // Use a fallback click method for elements that might not be simple
@@ -1200,7 +1221,41 @@ function createBrowserActionScript(actionType, description, value = '') {
         case 'type':
             return `
                 (function() {
-                    ${findElementScript}
+                    let element = null;
+                    const description = "${escapedDescription}".toLowerCase();
+                    const allElements = document.querySelectorAll('*');
+                    
+                    // 1. Try by ID
+                    if (!element) {
+                        element = document.getElementById("${escapedDescription}");
+                    }
+
+                    // 2. Try by placeholder
+                    if (!element) {
+                        const inputs = document.querySelectorAll('input, textarea');
+                        for (let input of inputs) {
+                            if (input.placeholder && input.placeholder.toLowerCase().includes(description)) {
+                                element = input;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // 3. Try by associated label text
+                    if (!element) {
+                        const labels = document.querySelectorAll('label');
+                        for (let label of labels) {
+                            if ((label.textContent || '').toLowerCase().includes(description)) {
+                                if (label.htmlFor) {
+                                    element = document.getElementById(label.htmlFor);
+                                } else {
+                                    const firstInput = label.querySelector('input, textarea, select');
+                                    if (firstInput) element = firstInput;
+                                }
+                                if (element) break;
+                            }
+                        }
+                    }
 
                     const text = "${escapedValue}";
                     
@@ -1220,7 +1275,30 @@ function createBrowserActionScript(actionType, description, value = '') {
         case 'select':
              return `
                 (function() {
-                    ${findElementScript}
+                    let element = null;
+                    const description = "${escapedDescription}".toLowerCase();
+                    const allElements = document.querySelectorAll('*');
+                    
+                    // 1. Try by ID
+                    if (!element) {
+                        element = document.getElementById("${escapedDescription}");
+                    }
+
+                    // 2. Try by associated label text
+                    if (!element) {
+                        const labels = document.querySelectorAll('label');
+                        for (let label of labels) {
+                            if ((label.textContent || '').toLowerCase().includes(description)) {
+                                if (label.htmlFor) {
+                                    element = document.getElementById(label.htmlFor);
+                                } else {
+                                    const firstInput = label.querySelector('input, textarea, select');
+                                    if (firstInput) element = firstInput;
+                                }
+                                if (element) break;
+                            }
+                        }
+                    }
 
                     const optionText = "${escapedValue}".toLowerCase();
                     
@@ -1243,7 +1321,30 @@ function createBrowserActionScript(actionType, description, value = '') {
         case 'checkbox':
              return `
                 (function() {
-                    ${findElementScript}
+                    let element = null;
+                    const description = "${escapedDescription}".toLowerCase();
+                    const allElements = document.querySelectorAll('*');
+                    
+                    // 1. Try by ID
+                    if (!element) {
+                        element = document.getElementById("${escapedDescription}");
+                    }
+
+                    // 2. Try by associated label text
+                    if (!element) {
+                        const labels = document.querySelectorAll('label');
+                        for (let label of labels) {
+                            if ((label.textContent || '').toLowerCase().includes(description)) {
+                                if (label.htmlFor) {
+                                    element = document.getElementById(label.htmlFor);
+                                } else {
+                                    const firstInput = label.querySelector('input[type="checkbox"]');
+                                    if (firstInput) element = firstInput;
+                                }
+                                if (element) break;
+                            }
+                        }
+                    }
 
                     const action = "${escapedValue}".toLowerCase();
                     

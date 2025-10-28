@@ -41,12 +41,17 @@ function normalizeUrl(url) {
 }
 
 let url = undefined
+let urlRaw = undefined
 let browserFrame = undefined
+
+
+
 function go() {
     currentUA = getRandomUserAgent()
     browserFrame = tabGroup.getActiveTab().webview
     let browser = tabGroup.getActiveTab()
     url = normalizeUrl(document.getElementById("txtUrl").value)
+    urlRaw = document.getElementById("txtUrl").value
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
     	url = url.replaceAll("youtube.com", "boobtube.nodemixaholic.com")
     	url = url.replaceAll("youtu.be", "boobtube.nodemixaholic.com")
@@ -56,8 +61,8 @@ function go() {
         //Get query from old url
         const query = serachUrlObj.searchParams.get('q');
         // Define the pattern for URL replacement
-        const searchPattern = "https://search.sparksammy.com/search.php?q=!!!QUERY!!!&p=0&t=0";
-        url = searchPattern.replaceAll("!!!QUERY!!!", query)
+        const searchPattern = `https://search.sparksammy.com/search.php?q=${query}&p=0&t=0`;
+        url = searchPattern; // Apply the search pattern
     } else if (url.includes("https://news.google.com")) {
     	url = url.replaceAll("https://news.google.com", "https://osn.nodemixaholic.com")
     } else if (url == "https://passwords/") {
@@ -72,17 +77,38 @@ function go() {
     	url = url.replaceAll("google.com", "search.sparksammy.com")
     }
     document.getElementById("txtUrl").value = ""
-    try {
-        browserFrame.loadURL(url, 
-        {userAgent: currentUA});
-    } catch {
-        // search for input url
-        const searchPattern = "https://search.sparksammy.com/search.php?q=!!!QUERY!!!&p=0&t=0";
-        const url2 = searchPattern.replaceAll("!!!QUERY!!!", url)
-        url = url2
-        browserFrame.loadURL(url, 
-        {userAgent: currentUA});
-    }
+
+
+    browserFrame.loadURL(url, {userAgent: currentUA});
+    
+    // Add error handler for when name is not resolved
+    browserFrame.addEventListener('did-fail-load', (event) => {
+        if (event.errorCode === -105 || event.errorCode === -106) { // Name not resolved or connection failed
+            console.log(`Failed to load ${url}, redirecting to search...`);
+            
+            // Extract the query from the original URL
+            let query = urlRaw;
+            // If it's a full URL, extract just the hostname or path
+            if (urlRaw.includes('://')) {
+                try {
+                    const urlObj = new URL(urlRaw);
+                    query = urlObj.hostname || urlObj.pathname || urlRaw;
+                } catch (e) {
+                    // If URL parsing fails, use the raw input
+                    query = urlRaw;
+                }
+            }
+            
+            // Clean up the query (remove protocol, etc.)
+            query = query.replace(/^https?:\/\//, '')
+                        .replace(/^www\./, '')
+                        .replace(/\/$/, '');
+            
+            // Redirect to search pattern
+            const searchUrl = `https://search.sparksammy.com/search.php?q=${encodeURIComponent(query)}&p=0&t=0`;
+            browserFrame.loadURL(searchUrl, {userAgent: currentUA});
+        }
+    });
     
     browserFrame.addEventListener('dom-ready', () => {
         browserFrame.insertCSS(`

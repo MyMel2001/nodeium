@@ -6,10 +6,14 @@ const { ElectronChromeExtensions } = require('electron-chrome-extensions')
 const { ElectronBlocker } = require('@ghostery/adblocker-electron');
 const http = require('http');
 const { createProxy } = require('proxy');
+const NodeiumMCPIntegration = require('./mcp-integration');
 
 ipcMain.on('windowmaker', (event, arg) => {
   createWindow();
 })
+
+// MCP Integration instance
+let mcpIntegration = null;
 
 const proxy = createProxy(http.createServer());
 proxy.listen(3129)
@@ -67,6 +71,10 @@ function createWindow () {
 
   mainWindow.removeMenu()
   mainWindow.setMinimumSize(1180, 300)
+  
+  // Initialize MCP integration
+  mcpIntegration = new NodeiumMCPIntegration(mainWindow, ipcMain);
+  mcpIntegration.initialize().catch(console.error);
 
   
 const toBlock = [
@@ -188,6 +196,9 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
+  if (mcpIntegration) {
+    mcpIntegration.shutdown().catch(console.error);
+  }
   if (process.platform !== 'darwin') app.quit()
 })
 

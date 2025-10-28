@@ -570,7 +570,296 @@ function handleLocalCommands(message) {
 
 
 // =================================================================
-// 3. Browser Context and Action Execution
+// 3. Natural Language Element Finding
+// =================================================================
+
+/**
+ * Enhanced element finding system using AI to understand natural language descriptions.
+ * This system analyzes the current page content and uses AI to intelligently match
+ * user descriptions to actual DOM elements.
+ */
+
+/**
+ * Extract comprehensive page context for AI element matching.
+ * This includes visible text, element attributes, and structural information.
+ * @returns {Promise<string>} A string containing the page context for AI analysis.
+ */
+async function extractPageContextForElementMatching() {
+    return new Promise((resolve, reject) => {
+        let tabGroup = document.querySelector("tab-group");
+        const webview = tabGroup && tabGroup.getActiveTab() ? tabGroup.getActiveTab().webview : null;
+        
+        if (!webview) {
+            reject(new Error('No active webview found'));
+            return;
+        }
+        
+        const pageContextScript = `
+            (function() {
+                // Extract all interactive and visible elements with their context
+                const elements = [];
+                const interactiveSelectors = [
+                    'a', 'button', 'input', 'textarea', 'select', 'label',
+                    '[onclick]', '[role="button"]', '[role="link"]', '[tabindex]'
+                ];
+                
+                // Get all interactive elements
+                const interactiveElements = document.querySelectorAll(interactiveSelectors.join(','));
+                
+                // Also get elements with visible text content
+                const textElements = document.querySelectorAll('*').filter(el => {
+                    const text = (el.textContent || '').trim();
+                    return text.length > 0 && text.length < 100; // Limit to reasonable text length
+                });
+                
+                // Combine and deduplicate
+                const allElements = [...new Set([...interactiveElements, ...textElements])];
+                
+                // Extract meaningful information for each element
+                allElements.forEach(el => {
+                    // Skip hidden elements
+                    if (el.offsetParent === null) return;
+                    
+                    const info = {
+                        tagName: el.tagName,
+                        id: el.id || '',
+                        className: el.className || '',
+                        text: (el.textContent || '').trim().substring(0, 80),
+                        placeholder: el.placeholder || '',
+                        type: el.type || '',
+                        value: el.value || '',
+                        href: el.href || '',
+                        title: el.title || '',
+                        alt: el.alt || '',
+                        role: el.getAttribute('role') || '',
+                        ariaLabel: el.getAttribute('aria-label') || '',
+                        // Position and visibility hints
+                        isVisible: el.offsetParent !== null,
+                        boundingRect: el.getBoundingClientRect()
+                    };
+                    
+                    // Only include elements with meaningful information
+                    if (info.text || info.placeholder || info.id || info.ariaLabel || info.title) {
+                        elements.push(info);
+                    }
+                });
+                
+                // Also include page context
+                const pageInfo = {
+                    title: document.title,
+                    url: window.location.href,
+                    headings: Array.from(document.querySelectorAll('h1, h2, h3, h4, h5, h6'))
+                        .map(h => ({ level: h.tagName, text: h.textContent.trim() }))
+                        .filter(h => h.text.length > 0),
+                    totalElements: elements.length
+                };
+                
+                return JSON.stringify({
+                    page: pageInfo,
+                    elements: elements.slice(0, 200) // Limit to first 200 elements for token management
+                }, null, 2);
+            })();
+        `;
+        
+        webview.executeJavaScript(pageContextScript).then(result => {
+            resolve(result);
+        }).catch(error => {
+            reject(new Error(`Failed to extract page context: ${error.message}`));
+        });
+    });
+}
+
+/**
+ * Use AI to find the best matching element based on natural language description.
+ * This function sends the page context and user description to the AI to get intelligent matching.
+ * @param {string} userDescription - Natural language description from user (e.g., "login button", "search field")
+ * @param {string} actionType - Type of action (click, type, etc.)
+ * @returns {Promise<{selector: string, confidence: number, reason: string}>} The best matching element selector
+ */
+async function findElementWithAI(userDescription, actionType = 'click') {
+    if (!apiKey) {
+        throw new Error('API key not configured');
+    }
+    
+    try {
+        // Extract current page context
+        const pageContext = await extractPageContextForElementMatching();
+        const pageData = JSON.parse(pageContext);
+        
+        // Prepare AI prompt for element matching
+        const messages = [
+            {
+                role: 'system',
+                content: `You are an intelligent element matching system. Your task is to analyze the provided page context and user description to find the most appropriate DOM element.
+
+**Guidelines:**
+- Match based on semantic meaning, not just exact text
+- Consider the action type: ${actionType} (clicking, typing, selecting, etc.)
+- Prioritize interactive elements (buttons, inputs, links)
+- Consider element visibility and position
+- Look for patterns and common UI conventions
+- Return the most confident match with a clear selector
+
+**Response Format:**
+Return ONLY a JSON object with this exact structure:
+{
+    "selector": "CSS selector for the element",
+    "confidence": 0.95,
+    "reason": "Brief explanation of why this element matches"
+}
+
+If no suitable element is found, return:
+{
+    "selector": "",
+    "confidence": 0.0,
+    "reason": "No suitable element found"
+}`
+            },
+            {
+                role: 'user',
+                content: `Page Context: ${pageContext}
+
+User Description: "${userDescription}"
+Action Type: ${actionType}
+
+Find the best matching element.`
+            }
+        ];
+        
+        // Call AI for element matching (using a separate call with higher token limit)
+        const chatCompletionsUrl = getChatCompletionsUrl(apiUrl);
+        const response = await fetch(chatCompletionsUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: AI_CONFIG.model,
+                messages: messages,
+                max_tokens: 2000, // Higher limit for context-heavy matching
+                temperature: 0.3 // Lower temperature for more consistent matching
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`AI matching failed: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const aiResponse = data.choices[0].message.content;
+        
+        // Parse AI response
+        try {
+            const matchResult = JSON.parse(aiResponse);
+            return matchResult;
+        } catch (parseError) {
+            // If JSON parsing fails, try to extract from text
+            const selectorMatch = aiResponse.match(/selector[":\s]+([^",}\s]+)/i);
+            const confidenceMatch = aiResponse.match(/confidence[":\s]+([0-9.]+)/i);
+            const reasonMatch = aiResponse.match(/reason[":\s]+([^"]+)/i);
+            
+            return {
+                selector: selectorMatch ? selectorMatch[1] : '',
+                confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) : 0.0,
+                reason: reasonMatch ? reasonMatch[1] : 'AI response parsing failed'
+            };
+        }
+        
+    } catch (error) {
+        console.error('AI element matching error:', error);
+        throw new Error(`Element matching failed: ${error.message}`);
+    }
+}
+
+/**
+ * Enhanced browser action script generator with AI-powered element finding.
+ * Falls back to heuristic matching if AI matching fails or is unavailable.
+ * @param {string} actionType - Type of action
+ * @param {string} description - Element description
+ * @param {string} value - Optional value
+ * @returns {Promise<string>} JavaScript code for webview execution
+ */
+async function createEnhancedBrowserActionScript(actionType, description, value = '') {
+    // Try AI matching first if API key is available
+    if (apiKey) {
+        try {
+            const aiMatch = await findElementWithAI(description, actionType);
+            
+            if (aiMatch.confidence > 0.7 && aiMatch.selector) {
+                // Use AI-found selector
+                return createScriptWithSelector(actionType, aiMatch.selector, value, description);
+            } else {
+                console.log(`AI matching low confidence (${aiMatch.confidence}): ${aiMatch.reason}`);
+                // Fall back to heuristic matching
+            }
+        } catch (error) {
+            console.log('AI matching failed, falling back to heuristics:', error.message);
+            // Fall back to heuristic matching
+        }
+    }
+    
+    // Fallback to original heuristic matching
+    return createBrowserActionScript(actionType, description, value);
+}
+
+/**
+ * Create browser action script using a specific CSS selector.
+ * @param {string} actionType - Type of action
+ * @param {string} selector - CSS selector for the element
+ * @param {string} value - Optional value
+ * @param {string} description - Original description for logging
+ * @returns {string} JavaScript code
+ */
+function createScriptWithSelector(actionType, selector, value = '', description = '') {
+    const escapedSelector = selector.replace(/"/g, '\\"');
+    const escapedValue = value.replace(/"/g, '\\"');
+    const escapedDescription = description.replace(/"/g, '\\"');
+    
+    switch (actionType) {
+        case 'click':
+            return `
+                (function() {
+                    const element = document.querySelector("${escapedSelector}");
+                    if (element) {
+                        if (element.click) {
+                            element.click();
+                        } else if (element.dispatchEvent) {
+                            element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+                        }
+                        return 'Clicked on element: ${escapedDescription} (AI-matched)';
+                    } else {
+                        return 'Element not found with selector: ${escapedSelector}';
+                    }
+                })();
+            `;
+            
+        case 'type':
+            return `
+                (function() {
+                    const element = document.querySelector("${escapedSelector}");
+                    const text = "${escapedValue}";
+                    
+                    if (element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA')) {
+                        element.focus();
+                        element.value = text;
+                        element.dispatchEvent(new Event('input', { bubbles: true }));
+                        element.dispatchEvent(new Event('change', { bubbles: true }));
+                        return 'Typed text into: ${escapedDescription} (AI-matched)';
+                    } else {
+                        return 'Element not found or not typeable: ${escapedDescription}';
+                    }
+                })();
+            `;
+            
+        // Add other action types as needed...
+        default:
+            return createBrowserActionScript(actionType, description, value);
+    }
+}
+
+// =================================================================
+// 4. Browser Context and Action Execution
 // =================================================================
 
 /**
@@ -802,8 +1091,12 @@ function executeBrowserActionAsync(action) {
             }
             else if (normalizedAction.startsWith('CLICK:')) {
                 const elementDescription = action.substring(6).trim();
-                const clickScript = createBrowserActionScript('click', elementDescription);
-                executeWebviewScript(clickScript, `Attempting to click: **${elementDescription}**`);
+                // Use enhanced AI-powered element finding
+                createEnhancedBrowserActionScript('click', elementDescription).then(clickScript => {
+                    executeWebviewScript(clickScript, `Attempting to click: **${elementDescription}**`);
+                }).catch(error => {
+                    reject(new Error(`Failed to create click script: ${error.message}`));
+                });
                 commandExecuted = true;
             }
             else if (normalizedAction.startsWith('TYPE:')) {
@@ -811,8 +1104,12 @@ function executeBrowserActionAsync(action) {
                 if (parts.length === 2) {
                     const elementDescription = parts[0].trim();
                     const textToType = parts[1].trim();
-                    const typeScript = createBrowserActionScript('type', elementDescription, textToType);
-                    executeWebviewScript(typeScript, `Attempting to type in: **${elementDescription}**`);
+                    // Use enhanced AI-powered element finding
+                    createEnhancedBrowserActionScript('type', elementDescription, textToType).then(typeScript => {
+                        executeWebviewScript(typeScript, `Attempting to type in: **${elementDescription}**`);
+                    }).catch(error => {
+                        reject(new Error(`Failed to create type script: ${error.message}`));
+                    });
                     commandExecuted = true;
                 } else {
                     const error = 'Invalid TYPE command format. Use: TYPE: [element description]|[text to type]';
@@ -822,14 +1119,22 @@ function executeBrowserActionAsync(action) {
             }
             else if (normalizedAction.startsWith('GET_ELEMENT_INFO:')) {
                 const elementDescription = action.substring(17).trim();
-                const infoScript = createBrowserActionScript('info', elementDescription);
-                executeWebviewScript(infoScript, `Getting info for: **${elementDescription}**`);
+                // Use enhanced AI-powered element finding
+                createEnhancedBrowserActionScript('info', elementDescription).then(infoScript => {
+                    executeWebviewScript(infoScript, `Getting info for: **${elementDescription}**`);
+                }).catch(error => {
+                    reject(new Error(`Failed to create info script: ${error.message}`));
+                });
                 commandExecuted = true;
             }
             else if (normalizedAction.startsWith('WAIT_FOR_ELEMENT:')) {
                  const elementDescription = action.substring(17).trim();
-                 const waitScript = createBrowserActionScript('wait', elementDescription);
-                 executeWebviewScript(waitScript, `Waiting for element: **${elementDescription}**`);
+                 // Use enhanced AI-powered element finding
+                 createEnhancedBrowserActionScript('wait', elementDescription).then(waitScript => {
+                    executeWebviewScript(waitScript, `Waiting for element: **${elementDescription}**`);
+                 }).catch(error => {
+                    reject(new Error(`Failed to create wait script: ${error.message}`));
+                 });
                  commandExecuted = true;
             }
             else if (normalizedAction.startsWith('SELECT_OPTION:')) {
@@ -837,8 +1142,12 @@ function executeBrowserActionAsync(action) {
                 if (parts.length === 2) {
                     const elementDescription = parts[0].trim();
                     const optionText = parts[1].trim();
-                    const selectScript = createBrowserActionScript('select', elementDescription, optionText);
-                    executeWebviewScript(selectScript, `Attempting to select option: **${optionText}**`);
+                    // Use enhanced AI-powered element finding
+                    createEnhancedBrowserActionScript('select', elementDescription, optionText).then(selectScript => {
+                        executeWebviewScript(selectScript, `Attempting to select option: **${optionText}**`);
+                    }).catch(error => {
+                        reject(new Error(`Failed to create select script: ${error.message}`));
+                    });
                     commandExecuted = true;
                 } else {
                     const error = 'Invalid SELECT_OPTION command format. Use: SELECT_OPTION: [element description]|[option text]';
@@ -850,9 +1159,12 @@ function executeBrowserActionAsync(action) {
                 const parts = action.substring(9).trim().split('|');
                 const elementDescription = parts[0].trim();
                 const actionType = parts[1] ? parts[1].trim().toLowerCase() : 'toggle';
-                
-                const checkboxScript = createBrowserActionScript('checkbox', elementDescription, actionType);
-                executeWebviewScript(checkboxScript, `Attempting to **${actionType}** checkbox: **${elementDescription}**`);
+                // Use enhanced AI-powered element finding
+                createEnhancedBrowserActionScript('checkbox', elementDescription, actionType).then(checkboxScript => {
+                    executeWebviewScript(checkboxScript, `Attempting to **${actionType}** checkbox: **${elementDescription}**`);
+                }).catch(error => {
+                    reject(new Error(`Failed to create checkbox script: ${error.message}`));
+                });
                 commandExecuted = true;
             }
 
@@ -1562,7 +1874,8 @@ function showHelp() {
 
 **Advanced Tips:**
 • I can chain multiple actions for complex workflows, like navigating to a login page, waiting for the form, typing credentials, and clicking the submit button.
-• Element descriptions can be the element's text, placeholder, or ID. Be as specific as possible!
+• **Natural Language Element Finding:** I now use AI to intelligently match your descriptions to elements! You can say "click on log" instead of needing to know exact element IDs or text.
+• Element descriptions can be natural language - I'll analyze the page and find the best match based on semantic meaning.
 
 **Example Scenario:**
 *User:* "Navigate to Google, search for Gemini, and click the link that says 'Google Gemini'."
@@ -1572,6 +1885,11 @@ ACTION: TYPE: search box|Gemini
 ACTION: CLICK: Google Search button
 ACTION: CLICK: Link to "Google Gemini"
 "
+
+**Natural Language Example:**
+*User:* "click on the login button"
+*AI Response:* "I'll click the login button for you.
+ACTION: CLICK: login button"
 
 Just chat naturally and I'll generate the required actions!
     `;

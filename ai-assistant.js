@@ -30,15 +30,33 @@ function initAIAssistant() {
     initializeSettingsUI();
     
     // Check if the required browser control functions exist (e.g., in the main app context)
-    if (typeof go !== 'function' || typeof back !== 'function' || typeof forward !== 'function' || typeof refresh !== 'function') {
-        console.error("Critical browser functions (go, back, forward, refresh) are missing from the global scope. Agent actions will fail.");
-        addMessage('assistant', '⚠️ **Error:** Critical browser functions are missing. Agent actions will be limited.');
-    }
-
+    checkBrowserFunctions();
+    
     if (apiKey) {
         addMessage('assistant', 'AI Assistant is ready! How can I help you today? Click ⚙️ to configure settings.');
     } else {
         addMessage('assistant', 'Welcome! Click ⚙️ to configure your OpenAI API Key and settings.');
+    }
+}
+
+/**
+ * Check if browser functions are available and provide better error handling
+ */
+function checkBrowserFunctions() {
+    const requiredFunctions = ['go', 'back', 'forward', 'refresh'];
+    const missingFunctions = requiredFunctions.filter(fn => typeof window[fn] !== 'function');
+    
+    if (missingFunctions.length > 0) {
+        console.warn("Some browser functions are missing:", missingFunctions);
+        
+        // Try to check again after a short delay (functions might be loaded asynchronously)
+        setTimeout(() => {
+            const stillMissing = requiredFunctions.filter(fn => typeof window[fn] !== 'function');
+            if (stillMissing.length > 0) {
+                console.error("Critical browser functions are still missing after delay:", stillMissing);
+                addMessage('assistant', '⚠️ **Warning:** Some browser functions are unavailable. Agent actions may be limited. Please refresh the page.');
+            }
+        }, 500);
     }
 }
 
@@ -586,8 +604,25 @@ async function executeActionsSequentially(actions) {
 function executeBrowserActionAsync(action) {
     return new Promise((resolve, reject) => {
         const normalizedAction = action.toUpperCase().trim();
-        let tabGroup = document.querySelector("tab-group");
-        const webview = tabGroup && tabGroup.getActiveTab() ? tabGroup.getActiveTab().webview : null;
+        
+        // Safely get tabGroup and webview with better error handling
+        let tabGroup;
+        let webview;
+        
+        try {
+            tabGroup = document.querySelector("tab-group");
+            if (tabGroup && tabGroup.getActiveTab) {
+                webview = tabGroup.getActiveTab().webview;
+            } else {
+                throw new Error("Tab group not properly initialized");
+            }
+        } catch (error) {
+            const errorMsg = `Cannot access browser state: ${error.message}`;
+            addMessage('assistant', `❌ ${errorMsg}`);
+            reject(new Error(errorMsg));
+            return;
+        }
+        
         let commandExecuted = false;
 
         // Helper function for webview.executeJavaScript calls with timeout and better error handling

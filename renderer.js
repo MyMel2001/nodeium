@@ -8,26 +8,16 @@
 
 let tabGroup = document.querySelector("tab-group");
 
-// In your main renderer.js or similar file (outside of ai-assistant.js)
-function go() {
-    const url = document.getElementById('txtUrl').value;
-    const webview = tabGroup.getActiveTab().webview;
-    if (webview && url) {
-        webview.loadURL(url); // The actual Electron/Chromium webview method
-    }
-}
-
-// Handle Enter key in URL bar
-function clickPress(event) {
-    if (event.key === 'Enter') {
-        go();
-    }
-}
-
 // The assistant code expects these to be defined globally
-window.go = go; 
-window.back = () => tabGroup.getActiveTab().webview.goBack();
-window.forward = () => tabGroup.getActiveTab().webview.goForward();
-window.refresh = () => tabGroup.getActiveTab().webview.reload();
-window.stop = () => tabGroup.getActiveTab().webview.stop();
-window.clickPress = clickPress;
+// These functions are already defined in libbrowz.js, so we just ensure they're available
+// and add any additional functionality if needed
+
+// Ensure tabGroup is properly initialized for AI assistant
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for tabGroup to be fully initialized
+    setTimeout(() => {
+        if (typeof window.initAIAssistant === 'function') {
+            window.initAIAssistant();
+        }
+    }, 100);
+});

@@ -70,15 +70,20 @@ function go() {
     	url = "https://jelly.nodemixaholic.com"
     } else if (url.includes("google.com") && !url.includes("maps") && !url.includes("news") && !url.includes("webstore") && !url.includes("drive") && !url.includes("docs") && !url.includes("sheets") && !url.includes("slides") && !url.includes("mail")) {
     	url = url.replaceAll("google.com", "search.sparksammy.com")
-    } else {
+    }
+    document.getElementById("txtUrl").value = ""
+    try {
+        browserFrame.loadURL(url, 
+        {userAgent: currentUA});
+    } catch {
         // search for input url
         const searchPattern = "https://search.sparksammy.com/search.php?q=!!!QUERY!!!&p=0&t=0";
         const url2 = searchPattern.replaceAll("!!!QUERY!!!", url)
         url = url2
-    }
-    document.getElementById("txtUrl").value = ""
-    browserFrame.loadURL(url, 
+        browserFrame.loadURL(url, 
         {userAgent: currentUA});
+    }
+    
     browserFrame.addEventListener('dom-ready', () => {
         browserFrame.insertCSS(`
         ::-webkit-scrollbar {

@@ -3,17 +3,19 @@
 /* Add styles here to customize the appearance of your app */
 
 html, body {
-  height: 100%;
-  width: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
 }
 
 body {
   user-select: none;
   display: flex;
   flex-direction: column;
+  overflow: auto;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 #navBar {
@@ -21,7 +23,7 @@ body {
   width: 100%;
   padding: 0;
   margin: 0;
-  background-color: #333;
+  background-color: #789;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -122,18 +124,58 @@ body {
   border-radius: 3px;
 }
 
+
 tab-group {
   flex: 1;
+  margin: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
   width: 100%;
-  height: calc(100% - 40px);
+  height: calc(100vh - 40px);
+  box-sizing: border-box;
   display: block;
+  position: relative;
+}
+
+/* Override electron-tabs internal styles via CSS variables */
+tab-group {
+  --tabgroup-background: #679;
+  --tab-font-size: 13px;
+  --tab-background: #333;
+  --tab-color: white;
+  --tab-border-color: #444;
+  --tab-active-background: #555;
+  --tab-active-color: white;
+  --tab-hover-background: #444;
+  --tab-hover-color: white;
+  --button-background: #333;
+  --button-color: white;
+  --button-hover-background: #444;
+  --button-hover-color: white;
+  --views-height: calc(100vh - 72px); /* 40px nav bar + 32px tab bar */
+}
+
+/* The key fix: Ensure the webview container accounts for both nav bar AND tab bar */
+tab-group {
+  height: calc(100vh - 40px);
+}
+
+/* Force the views container to take the remaining space after the tab bar */
+tab-group * {
+  box-sizing: border-box;
 }
 
 webview {
-  width: 100%;
-  height: 100%;
   border: none;
   box-sizing: border-box;
+  display: block;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+}
+
+webview::-webkit-scrollbar {
   display: block;
 }
 

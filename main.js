@@ -51,22 +51,22 @@ function isLocal(url) {
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
-    width: 1100,
+    width: 1220,
     height: 600,
-    minWidth: 1100,
+    minWidth: 1220,
     minHeight: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webviewTag: true,
-      devTools: true,
+      devTools: false,
       nodeIntegration: false,
       sandbox: true,
       contextIsolation: true
     }
   })
 
-  //mainWindow.removeMenu()
-  mainWindow.setMinimumSize(1000, 300)
+  mainWindow.removeMenu()
+  mainWindow.setMinimumSize(1180, 300)
 
   
 const toBlock = [

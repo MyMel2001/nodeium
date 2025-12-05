@@ -1,8 +1,10 @@
 # Nodeium
 
+
 A basic web browser in Electron. ***With a functioning adblocker and privacy redirection technologies!***
 
 Note: This is a browser made for my own enjoyment, feel free to fork it.
+
 
 ## Testing, compiling, and creation notes
 

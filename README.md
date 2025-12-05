@@ -1,5 +1,9 @@
 # Nodeium
+
+
 A basic web browser in Electron. ***With a functioning adblocker and privacy redirection technologies!***
+
+Note: This is a browser made for my own enjoyment, feel free to fork it.
 
 
 ## Testing, compiling, and creation notes
@@ -31,7 +35,7 @@ A basic Electron application needs just these files:
 
 ## License
 
-[SPL-R5](https://github.com/Sneed-Group/sneedium/blob/master/LICENSE.md)
+[SPL-R5](LICENSE.md)
 
 ## Disclaimer
 

@@ -17,7 +17,7 @@
     "tutorial",
     "demo"
   ],
-  "author": "Sneed Group",
+  "author": "Sammy L",
   "license": "SPL-R5",
   "devDependencies": {
     "@electron-forge/cli": "^6.0.5",
@@ -26,14 +26,14 @@
     "@electron-forge/maker-rpm": "^6.0.5",
     "@electron-forge/maker-squirrel": "^6.0.5",
     "@electron-forge/maker-zip": "^6.0.5",
-    "electron": "^31.0.1",
+    "electron": "^38.4.0",
     "electron-forge-maker-appimage": "^24.6.3",
     "electron-packager": "^17.1.2"
   },
   "dependencies": {
     "@cliqz/adblocker-electron": "^1.33.2",
     "cross-fetch": "^3.1.5",
-    "electron-chrome-extensions": "^3.10.0",
+    "electron-chrome-extensions": "^4.9.0",
     "electron-squirrel-startup": "^1.0.1",
     "electron-tabs": "^1.0.1",
     "proxy": "^2.2.0"

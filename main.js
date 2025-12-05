@@ -3,13 +3,17 @@ const {app, BrowserWindow, session, ipcMain} = require('electron')
 const path = require('path')
 const fetch = require("cross-fetch")
 const { ElectronChromeExtensions } = require('electron-chrome-extensions')
-const { ElectronBlocker } = require('@cliqz/adblocker-electron');
+const { ElectronBlocker } = require('@ghostery/adblocker-electron');
 const http = require('http');
 const { createProxy } = require('proxy');
+const NodeiumMCPIntegration = require('./mcp-integration');
 
 ipcMain.on('windowmaker', (event, arg) => {
   createWindow();
 })
+
+// MCP Integration instance
+let mcpIntegration = null;
 
 const proxy = createProxy(http.createServer());
 proxy.listen(3129)
@@ -23,12 +27,19 @@ async function enableGoodies(s) {
     'https://easylist.to/easylist/easyprivacy.txt',
     'https://easylist-downloads.adblockplus.org/antiadblockfilters.txt',
     'https://raw.githubusercontent.com/hoshsadiq/adblock-nocoin-list/master/nocoin.txt',
-    'https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.plus.txt'
+    'https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/pro.plus.txt',
+    'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/filters.txt',
+    'https://raw.githubusercontent.com/uBlockOrigin/uAssets/refs/heads/master/filters/quick-fixes.txt',
+    'https://github.com/uBlockOrigin/uAssets/raw/refs/heads/master/filters/unbreak.txt'
   ])
   blocker.enableBlockingInSession(s);
-  extensions = new ElectronChromeExtensions({
+  try {
+    extensions = new ElectronChromeExtensions({
     session: s
   })
+  } catch {
+    console.log("!?!")
+  }
 }
 
 // 0.0.0.0 day fix
@@ -44,22 +55,26 @@ function isLocal(url) {
 
 function createWindow () {
   const mainWindow = new BrowserWindow({
-    width: 1100,
+    width: 1220,
     height: 600,
-    minWidth: 1100,
+    minWidth: 1220,
     minHeight: 600,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webviewTag: true,
       devTools: false,
-      nodeIntegration: true,
+      nodeIntegration: false,
       sandbox: true,
       contextIsolation: true
     }
   })
 
   mainWindow.removeMenu()
-  mainWindow.setMinimumSize(1000, 300)
+  mainWindow.setMinimumSize(1180, 300)
+  
+  // Initialize MCP integration
+  mcpIntegration = new NodeiumMCPIntegration(mainWindow, ipcMain);
+  mcpIntegration.initialize().catch(console.error);
 
   
 const toBlock = [
@@ -157,7 +172,7 @@ const regexPatterns = [
     }
   })
   
-  // and load the index.html of the app.
+  // and load the UI of the app.
   mainWindow.loadFile('index.html')
 
   
@@ -169,7 +184,7 @@ const regexPatterns = [
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   let x = createWindow()
-  enableGoodies().then()
+  enableGoodies(session.defaultSession).then()
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
@@ -181,6 +196,9 @@ app.whenReady().then(() => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', function () {
+  if (mcpIntegration) {
+    mcpIntegration.shutdown().catch(console.error);
+  }
   if (process.platform !== 'darwin') app.quit()
 })
 

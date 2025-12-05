@@ -3,7 +3,7 @@
 # Sneedium
 A basic web browser in Electron. ***With a functioning adblocker and privacy redirection technologies!***
 
-[![Download latest build.](https://github.com/MyMel2001/nodeium/blob/master/download.png?raw=true)](https://github.com/MyMel2001/nodeium/releases)
+[![Download latest build.](https://github.com/MyMel2001/nodeium/blob/master/download.png?raw=true)](https://github.com/MyMel2001/nodeium/archive/refs/heads/dependabot/npm_and_yarn/cliqz/adblocker-electron-1.33.2.zip)
 
 ## Testing, compiling, and creation notes
 

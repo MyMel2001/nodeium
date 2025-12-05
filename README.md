@@ -1,4 +1,4 @@
-<img src="https://github.com/Sneed-Group/sneedium/blob/master/logo.png?raw=true" align="right" width="15%"/>
+<img src="https://github.com/MyMel2001/nodeium/blob/master/logo.png?raw=true" align="right" width="15%"/>
 
 # Sneedium
 A basic web browser in Electron. ***With a functioning adblocker and privacy redirection technologies!***

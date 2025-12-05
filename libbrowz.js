@@ -53,8 +53,8 @@ function go() {
     url = normalizeUrl(document.getElementById("txtUrl").value)
     urlRaw = document.getElementById("txtUrl").value
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
-    	url = url.replaceAll("youtube.com", "boobtube.nodemixaholic.com")
-    	url = url.replaceAll("youtu.be", "boobtube.nodemixaholic.com")
+    	url = url.replaceAll("youtube.com", "yewtu.be")
+    	url = url.replaceAll("youtu.be", "yewtu.be")
     } else if (url.includes("google.com/search?q") || url.includes("google.com/?q")) {
         // Define the URL object
         const serachUrlObj = new URL(url);
@@ -65,13 +65,11 @@ function go() {
         url = searchPattern; // Apply the search pattern
     } else if (url.includes("https://news.google.com")) {
     	url = url.replaceAll("https://news.google.com", "https://osn.nodemixaholic.com")
-    } else if (url == "https://passwords/") {
-    	url = "https://passy.nodemixaholic.com"
+    } else if (url == "https://passwd/") {
+    	url = "https://vaiult.bitwarden.com"
     } else if (url == "https://newtab/" || url == "https://ai/") {
     	url = "https://personal-ai.nodemixaholic.com"
-    } else if (url == "https://casaos-main/") {
-    	url = "http://192.168.50.238:8012"
-    } else if (url == "https://jellyfin/") {
+    } else if (url == "https://nm-jellyfin/") {
     	url = "https://jelly.nodemixaholic.com"
     } else if (url.includes("google.com") && !url.includes("maps") && !url.includes("news") && !url.includes("webstore") && !url.includes("drive") && !url.includes("docs") && !url.includes("sheets") && !url.includes("slides") && !url.includes("mail")) {
     	url = url.replaceAll("google.com", "search.sparksammy.com")

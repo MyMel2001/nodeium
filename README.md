@@ -1,46 +1,59 @@
 # Nodeium
 
+A privacy-focused web browser rewritten in **Python 3** using **PyQt6** and **QtWebEngine**.
 
-A basic web browser in Electron. ***With a functioning adblocker and privacy redirection technologies!***
+Nodeium provides a lightweight browsing experience with built-in ad-blocking, privacy redirections, and an integrated AI assistant.
 
-Note: This is a browser made for my own enjoyment, feel free to fork it.
+## Features
 
+- **Ad-Blocking**: Built-in request interceptor with a comprehensive blocklist.
+- **Privacy Redirection Technology (PRT)**: Automatically redirects trackers and non-private services (e.g., YouTube, Google Search) to privacy-friendly alternatives (e.g., Yewtu.be, SearXNG).
+- **0.0.0.0 Day Fix**: Protection against remote sites attempting to access local network resources (local IPs/hostnames).
+- **Integrated AI Assistant**: A sidebar assistant compatible with OpenAI and other OpenAI-compatible APIs (Ollama, LocalAI, etc.), configurable directly in the UI.
+- **Tabbed Interface**: Simple and intuitive tab management.
+- **Custom User Agents**: Randomly selected user agents to reduce browser fingerprinting.
 
-## Testing, compiling, and creation notes
+## Installation
 
-To clone and run this repository you'll need [Node.js](https://nodejs.org/en/download/) (which comes with [npm](http://npmjs.com)) installed on your computer. From your command line:
+### Prerequisites
 
-```bash
-# Install dependencies
-npm install
-# Run the app
-npm start
-```
+You will need **Python 3.9+** installed on your system.
 
-Supports compiling via electron packager. Install and run it with:
+### Steps
 
-```bash
-npm install --save-dev electron-packager
-npm run make
-```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/sparksammy/nodeium.git
+   cd nodeium
+   ```
 
-Keep in mind you also need a copy of the WINE project and need to be on Linux.
+2. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-A basic Electron application needs just these files:
+3. **Run the application**:
+   ```bash
+   python3 main.py
+   ```
 
-- `package.json` - Points to the app's main file and lists its details and dependencies.
-- `main.js` - Starts the app and creates a browser window to render HTML. This is the app's **main process**.
-- `index.html` - A web page to render. This is the app's **renderer process**.
-- `preload.js` - A content script that runs before the renderer process loads.
+## Configuration
+
+- **AI Assistant**: Click the `⚙ Settings` button in the AI sidebar to configure your API Base URL, API Key, and Model.
+- **Browser Defaults**: Core settings like the homepage and blocklists can be found in `core/config.py`.
+
+## Project Structure
+
+- `main.py`: Application entry point and initialization.
+- `browser/`: UI components (Window, WebView, Tabs).
+- `network/`: Request interception and ad-blocking logic.
+- `ai/`: AI Assistant sidebar and settings.
+- `core/`: Constants, utilities, and URL normalization.
 
 ## License
 
 [SPL-R5](LICENSE.md)
 
-## Disclaimer
-
-"Insider's Look" builds are outdated. If you want changes, compile it or download the new binaries.
-
 ## What is Privacy Redirection Technology (PRT)?
 
-This is a simple technology that replaces a bad URL with a more privacy friendly service, when we know that ADs aren't 100% blocked, or just to provide a better UX. TLDR: Clickjacking for the greater good.
+PRT is a core feature of Nodeium that replaces potentially invasive URLs with privacy-friendly alternatives. It ensures that even if ads aren't 100% blocked, your data is handled by services that respect your privacy.

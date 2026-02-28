@@ -1,5 +1,27 @@
-node_modules
-seedium-linux-x64
-sneedium-win32-x64
-seedium-linux-arm64
-sneedium-win32-arm64
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDE settings
+.vscode/
+.idea/
+
+# Node-related remnants (if any)
+node_modules/
+package-lock.json
+
+# Build and dist directories
+dist/
+build/
+*.spec
+
+# Nodeium specifics
+.claude/
+nodeium.log

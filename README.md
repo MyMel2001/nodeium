@@ -1,4 +1,4 @@
-# <img align="left" src="logo.png" alt="Nodeium Logo" width="48" height="48"> Nodeium
+# <img align="left" src="logo.png" alt="Nodeium Logo" width="15%" height="15%"> Nodeium
 
 A basic web browser in Electron. **_With a functioning adblocker and privacy redirection technologies!_**
 

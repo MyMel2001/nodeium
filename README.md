@@ -1,10 +1,8 @@
-# Nodeium
+# <img align="left" src="logo.png" alt="Nodeium Logo" width="48" height="48"> Nodeium
 
-
-A basic web browser in Electron. ***With a functioning adblocker and privacy redirection technologies!***
+A basic web browser in Electron. **_With a functioning adblocker and privacy redirection technologies!_**
 
 Note: This is a browser made for my own enjoyment, feel free to fork it.
-
 
 ## Testing, compiling, and creation notes
 

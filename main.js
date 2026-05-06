@@ -7,29 +7,11 @@ const { ElectronBlocker } = require('@ghostery/adblocker-electron');
 const http = require('http');
 const { createProxy } = require('proxy');
 const NodeiumMCPIntegration = require('./mcp-integration');
-const Store = require('electron-store');
-
-// Initialize settings store
-const store = new Store({
-  defaults: {
-    darkModeEnabled: false,
-    defaultBrowser: false
-  }
-});
 
 ipcMain.on('windowmaker', (event, arg) => {
   createWindow();
 })
 
-// Settings IPC handlers
-ipcMain.handle('get-settings', () => {
-  return store.store;
-});
-
-ipcMain.handle('save-settings', (event, settings) => {
-  store.set(settings);
-  return store.store;
-});
 
 ipcMain.handle('set-default-browser', async () => {
   try {
@@ -55,7 +37,6 @@ ipcMain.handle('set-default-browser', async () => {
           else resolve();
         });
       });
-      store.set('defaultBrowser', true);
       return { success: true };
     } else if (process.platform === 'win32') {
       // Windows: Set as default browser via registry
@@ -72,7 +53,6 @@ ipcMain.handle('set-default-browser', async () => {
           else resolve();
         });
       });
-      store.set('defaultBrowser', true);
       return { success: true };
     } else {
       // Linux: Set as default browser via xdg-settings
@@ -83,7 +63,6 @@ ipcMain.handle('set-default-browser', async () => {
           else resolve();
         });
       });
-      store.set('defaultBrowser', true);
       return { success: true };
     }
   } catch (error) {
@@ -293,16 +272,12 @@ const regexPatterns = [
 
   // Inject dark mode CSS if enabled
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    if (store.get('darkModeEnabled') && details.resourceType === 'main') {
-      callback({
+    callback({
         responseHeaders: {
           ...details.responseHeaders,
           'Content-Security-Policy': ["default-src 'self' *; script-src 'self' 'unsafe-inline' *; style-src 'self' 'unsafe-inline' *"]
         }
       });
-    } else {
-      callback({});
-    }
   });
   
   // and load the UI of the app.

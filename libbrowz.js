@@ -42,7 +42,7 @@ function initWebview(browserFrame) {
     browserFrame.addEventListener('did-fail-load', (event) => {
         if (event.errorCode === -105 || event.errorCode === -106) {
             let query = browserFrame.getURL() || "search";
-            const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web`;
+            const searchUrl = `https://lite.duckduckgo.com/lite?q=${encodeURIComponent(query)}&ia=web`;
             browserFrame.loadURL(searchUrl, { userAgent: currentUA });
         }
     });
@@ -92,7 +92,7 @@ function go() {
     // URL Routing Logic
     if (url.includes("google.com/search?q") || url.includes("google.com/?q")) {
         const query = new URL(url).searchParams.get('q');
-        url = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web`;
+        url = `https://lite.duckduckgo.com/lite?q=${encodeURIComponent(query)}&ia=web`;
     } else if (url.includes("youtube.com")) {
         url = url.replace("https://youtube.com", "https://boobtube.nodemixaholic.com");
     } else if (url.includes("youtu.be")) {
@@ -108,7 +108,7 @@ function go() {
     } else if (url === "https://media/") {
         url = "https://jelly.nodemixaholic.com";
     } else if (url.includes("google.com") && !/maps|news|webstore|drive|docs|sheets|slides|mail/.test(url)) {
-        url = url.replace("google.com", "duckduckgo.com");
+        url = url.replace("google.com", "lite.duckduckgo.com");
     }
 
     input.value = "";

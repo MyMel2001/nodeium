@@ -4,3 +4,5 @@ nodeium-win32-x64
 seedium-linux-arm64
 nodeium-win32-arm64
 nodeium-darwin-*
+.DS_Store
+*/.DS_Store

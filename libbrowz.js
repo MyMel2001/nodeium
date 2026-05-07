@@ -98,7 +98,7 @@ function go() {
     } else if (url.includes("youtu.be")) {
         url = url.replace("https://youtu.be", "https://boobtube.nodemixaholic.com");
     } else if (url.includes("https://news.google.com")) {
-        url = url.replace("https://news.google.com", "https://cnn.com");
+        url = "https://cnn.com"
     } else if (url === "https://passwd/") {
         url = "https://vault.bitwarden.com";
     } else if (url === "https://newtab/" || url === "https://ai/") {

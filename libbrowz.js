@@ -52,10 +52,7 @@ function go() {
     let browser = tabGroup.getActiveTab()
     url = normalizeUrl(document.getElementById("txtUrl").value)
     urlRaw = document.getElementById("txtUrl").value
-    if (url.includes("youtube.com") || url.includes("youtu.be")) {
-    	url = url.replaceAll("youtube.com", "yewtu.be")
-    	url = url.replaceAll("youtu.be", "yewtu.be")
-    } else if (url.includes("google.com/search?q") || url.includes("google.com/?q")) {
+    if (url.includes("google.com/search?q") || url.includes("google.com/?q")) {
         // Define the URL object
         const serachUrlObj = new URL(url);
         //Get query from old url
@@ -69,7 +66,7 @@ function go() {
     	url = "https://vault.bitwarden.com"
     } else if (url == "https://newtab/" || url == "https://ai/") {
     	url = "https://personal-ai.nodemixaholic.com"
-    } else if (url == "https://nm-jellyfin/") {
+    } else if (url == "https://media/") {
     	url = "https://jelly.nodemixaholic.com"
     } else if (url.includes("google.com") && !url.includes("maps") && !url.includes("news") && !url.includes("webstore") && !url.includes("drive") && !url.includes("docs") && !url.includes("sheets") && !url.includes("slides") && !url.includes("mail")) {
     	url = url.replaceAll("google.com", "search.sparksammy.com")

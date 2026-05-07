@@ -1,20 +1,4 @@
-const userAgents = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/128.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edg/120.0.0.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edg/98.0.0.0",
-    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/98.0.4758.102 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/128.0"
-];
 
-function getRandomUserAgent() {
-    const randomIndex = Math.floor(Math.random() * userAgents.length);
-    return userAgents[randomIndex];
-}
 
 let currentUA = "" // We haven't loaded any websites yet. It should be blank.
 
@@ -44,10 +28,31 @@ let url = undefined
 let urlRaw = undefined
 let browserFrame = undefined
 
+async function getLatestChromeUA() {
+    try {
+        const response = await fetch('https://www.whatismybrowser.com/guides/the-latest-user-agent/chrome');
+        const html = await response.text();
 
+        // This regex searches for the first instance of a Chrome User Agent string
+        const uaRegex = /Mozilla\/5.0 [^<]*Chrome\/[0-9.]*[^<]*/;
+        const match = html.match(uaRegex);
+
+        if (match) {
+            const latestUA = match[0];
+            console.log("Latest Chrome UA grabbed:", latestUA);
+            return latestUA;
+        } else {
+            throw new Error("Could not find User Agent string in the HTML.");
+        }
+    } catch (error) {
+        console.error("Error fetching UA:", error);
+        // Fallback to a hardcoded string if the scrape fails
+        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36";
+    }
+}
 
 function go() {
-    currentUA = getRandomUserAgent()
+    currentUA = getLatestChromeUA()
     browserFrame = tabGroup.getActiveTab().webview
     let browser = tabGroup.getActiveTab()
     url = normalizeUrl(document.getElementById("txtUrl").value)

@@ -71,7 +71,7 @@ ipcMain.handle('save-settings', (settings) => {
 ipcMain.handle('set-default-browser', async () => {
   try {
     // Get the actual bundle ID from the app
-    const bundleId = app.name === 'sneedium' ? 'com.electron.sneedium' : 'com.electron.nodeium';
+    const bundleId = app.name === 'nodeium' ? 'com.electron.nodeium' : 'com.electron.nodeium';
 
     if (process.platform === 'darwin') {
       // macOS: Set as default browser using AppleScript
@@ -115,7 +115,7 @@ ipcMain.handle('set-default-browser', async () => {
     } else {
       // Linux: Set as default browser via xdg-settings
       const { exec } = require('child_process');
-      const desktopFile = app.name === 'sneedium' ? 'sneedium.desktop' : 'nodeium.desktop';
+      const desktopFile = app.name === 'nodeium' ? 'nodeium.desktop' : 'nodeium.desktop';
       await new Promise((resolve, reject) => {
         exec(`xdg-settings set default-web-browser ${desktopFile}`, (error) => {
           if (error) reject(error);
@@ -133,7 +133,7 @@ ipcMain.handle('set-default-browser', async () => {
 ipcMain.handle('check-default-browser', async () => {
   try {
     // Get the actual bundle ID from the app
-    const bundleId = app.name === 'sneedium' ? 'com.electron.sneedium' : 'com.electron.nodeium';
+    const bundleId = app.name === 'nodeium' ? 'com.electron.nodeium' : 'com.electron.nodeium';
 
     if (process.platform === 'darwin') {
       const { exec } = require('child_process');
@@ -155,7 +155,7 @@ ipcMain.handle('check-default-browser', async () => {
       return result;
     } else {
       const { exec } = require('child_process');
-      const desktopFile = app.name === 'sneedium' ? 'sneedium.desktop' : 'nodeium.desktop';
+      const desktopFile = app.name === 'nodeium' ? 'nodeium.desktop' : 'nodeium.desktop';
       const result = await new Promise((resolve) => {
         exec('xdg-settings get default-web-browser', (error, stdout) => {
           if (error) resolve(false);
@@ -218,6 +218,7 @@ function createWindow () {
   const mainWindow = new BrowserWindow({
     width: 1220,
     height: 600,
+    minWidth: 42,
     minHeight: 200,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),

@@ -49,7 +49,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   for (const type of ['chrome', 'node', 'electron']) {
-    replaceText(`${type}-version`, 'sneedium-version')
+    replaceText(`${type}-version`, 'nodeium-version')
   }
 
   ipcRenderer.on('windowmaker', (event, arg) => {

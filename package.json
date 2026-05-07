@@ -1,5 +1,5 @@
 {
-  "name": "sneedium",
+  "name": "nodeium",
   "version": "1.0.0",
   "description": "A Electron browser",
   "main": "main.js",
@@ -9,7 +9,7 @@
     "make": "npx electron-packager --platform linux,win32 --arch x64,arm64 .",
     "make-mac": "npx electron-packager --platform darwin --arch x64,arm64 ."
   },
-  "repository": "https://github.com/Sneed-Group/sneedium",
+  "repository": "https://github.com/MyMel2001/nodeium",
   "keywords": [
     "Electron",
     "AI",

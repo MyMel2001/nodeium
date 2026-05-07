@@ -70,17 +70,20 @@ ipcMain.handle('save-settings', (settings) => {
 
 ipcMain.handle('set-default-browser', async () => {
   try {
+    // Get the actual bundle ID from the app
+    const bundleId = app.name === 'sneedium' ? 'com.electron.sneedium' : 'com.electron.nodeium';
+
     if (process.platform === 'darwin') {
       // macOS: Set as default browser using AppleScript
       const { exec } = require('child_process');
       await new Promise((resolve, reject) => {
-        exec('defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add \'{ "LSHandlerRoleAll" = "com.electron.nodeium"; "LSHandlerURLScheme" = "http"; }\'', (error) => {
+        exec(`defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{ "LSHandlerRoleAll" = "${bundleId}"; "LSHandlerURLScheme" = "http"; }'`, (error) => {
           if (error) reject(error);
           else resolve();
         });
       });
       await new Promise((resolve, reject) => {
-        exec('defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add \'{ "LSHandlerRoleAll" = "com.electron.nodeium"; "LSHandlerURLScheme" = "https"; }\'', (error) => {
+        exec(`defaults write com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers -array-add '{ "LSHandlerRoleAll" = "${bundleId}"; "LSHandlerURLScheme" = "https"; }'`, (error) => {
           if (error) reject(error);
           else resolve();
         });
@@ -112,8 +115,9 @@ ipcMain.handle('set-default-browser', async () => {
     } else {
       // Linux: Set as default browser via xdg-settings
       const { exec } = require('child_process');
+      const desktopFile = app.name === 'sneedium' ? 'sneedium.desktop' : 'nodeium.desktop';
       await new Promise((resolve, reject) => {
-        exec('xdg-settings set default-web-browser nodeium.desktop', (error) => {
+        exec(`xdg-settings set default-web-browser ${desktopFile}`, (error) => {
           if (error) reject(error);
           else resolve();
         });
@@ -128,12 +132,15 @@ ipcMain.handle('set-default-browser', async () => {
 
 ipcMain.handle('check-default-browser', async () => {
   try {
+    // Get the actual bundle ID from the app
+    const bundleId = app.name === 'sneedium' ? 'com.electron.sneedium' : 'com.electron.nodeium';
+
     if (process.platform === 'darwin') {
       const { exec } = require('child_process');
       const result = await new Promise((resolve) => {
         exec('defaults read com.apple.LaunchServices/com.apple.launchservices.secure LSHandlers', (error, stdout) => {
           if (error) resolve(false);
-          else resolve(stdout.includes('com.electron.nodeium'));
+          else resolve(stdout.includes(bundleId));
         });
       });
       return result;
@@ -148,10 +155,11 @@ ipcMain.handle('check-default-browser', async () => {
       return result;
     } else {
       const { exec } = require('child_process');
+      const desktopFile = app.name === 'sneedium' ? 'sneedium.desktop' : 'nodeium.desktop';
       const result = await new Promise((resolve) => {
         exec('xdg-settings get default-web-browser', (error, stdout) => {
           if (error) resolve(false);
-          else resolve(stdout.includes('nodeium'));
+          else resolve(stdout.includes(desktopFile.replace('.desktop', '')));
         });
       });
       return result;

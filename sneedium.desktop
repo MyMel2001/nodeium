@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Sneedium
+Comment=A privacy-focused Electron browser
+Exec=sneedium %U
+Icon=sneedium
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;application/vnd.mozilla.xul+xml;text/mml;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;
+StartupNotify=true

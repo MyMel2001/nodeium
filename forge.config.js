@@ -1,5 +1,7 @@
 module.exports = {
-  packagerConfig: {},
+  packagerConfig: {
+    extraResource: ['sneedium.desktop']
+  },
   rebuildConfig: {},
   makers: [
     {

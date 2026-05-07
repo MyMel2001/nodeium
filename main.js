@@ -233,7 +233,6 @@ function createWindow () {
   })
 
   mainWindow.removeMenu()
-  mainWindow.setMinimumSize(1180, 300)
   
   // Initialize MCP integration
   mcpIntegration = new NodeiumMCPIntegration(mainWindow, ipcMain);

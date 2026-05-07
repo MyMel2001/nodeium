@@ -100,7 +100,7 @@ function go() {
     } else if (url.includes("https://news.google.com")) {
         url = "https://cnn.com"
     } else if (url.includes("https://maps.google.com")) {
-        url = "https://www.openstreetmap.org"
+        url = url.replace("https://maps.google.com", "https://www.openstreetmap.org");
     } else if (url === "https://passwd/") {
         url = "https://vault.bitwarden.com";
     } else if (url === "https://newtab/" || url === "https://ai/") {

@@ -858,7 +858,7 @@ function executeBrowserActionAsync(action) {
             }
             else if (normalizedAction.startsWith('SEARCH:')) {
                 const query = action.substring(7).trim();
-                const searchUrl = `https://search.sparksammy.com/search.php?q=${encodeURIComponent(query)}`;
+                const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web`;
                 if (typeof go === 'function' && document.getElementById('txtUrl')) {
                     document.getElementById('txtUrl').value = searchUrl;
                     go();
@@ -1161,7 +1161,7 @@ function executeBrowserAction(action) {
         }
         else if (normalizedAction.startsWith('SEARCH:')) {
             const query = action.substring(7).trim();
-            const searchUrl = `https://search.sparksammy.com/search.php?q=${encodeURIComponent(query)}`;
+            const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web`;
             // Assuming 'txtUrl' and 'go()' are global application functions/elements
             if (typeof go === 'function' && document.getElementById('txtUrl')) {
                 document.getElementById('txtUrl').value = searchUrl;

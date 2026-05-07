@@ -121,7 +121,7 @@ class NodeiumMCPIntegration {
      */
     async executeSearch(args) {
         const { query } = args;
-        const searchUrl = `https://search.sparksammy.com/search.php?q=${encodeURIComponent(query)}`;
+        const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(query)}&ia=web`;
         
         this.mainWindow.webContents.send('mcp-action', {
             type: 'navigate',

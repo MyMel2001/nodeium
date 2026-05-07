@@ -13,6 +13,9 @@ class NodeiumMCPServer extends EventEmitter {
         this.setupResources();
     }
 
+    
+    
+
     /**
      * Initialize the MCP server
      */
@@ -305,5 +308,7 @@ class NodeiumMCPServer extends EventEmitter {
         console.log('Nodeium MCP Server shutdown');
     }
 }
+
+NodeiumMCPServer.setMaxListeners(0);
 
 module.exports = NodeiumMCPServer;

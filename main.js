@@ -223,8 +223,10 @@ function createWindow () {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       webviewTag: true,
-      devTools: false,
+      devTools: true,
       nodeIntegration: false,
+      nodeIntegrationInSubFrames: false,
+      enableRemoteModule: false,
       sandbox: true,
       contextIsolation: true
     }
@@ -299,6 +301,11 @@ const regexPatterns = [
 
     return false;
   }
+  session.defaultSession.clearStorageData({
+    storages: [
+      'appcache', 'indexeddb', 'shadercache', 'videocache', 'filesystem' 
+    ]
+  })  
 
   session.defaultSession.setProxy({
     proxyRules: 'http=localhost:3129;https=localhost:3129',

@@ -438,8 +438,8 @@ function handleLocalCommands(message) {
  */
 async function extractPageContextForElementMatching() {
     return new Promise((resolve, reject) => {
-        let tabGroup = document.querySelector("tab-group");
-        const webview = tabGroup && tabGroup.getActiveTab() ? tabGroup.getActiveTab().webview : null;
+        let tabGroupAI = document.querySelector("tab-group");
+        const webview = tabGroupAI && tabGroupAI.getActiveTab() ? tabGroupAI.getActiveTab().webview : null;
         
         if (!webview) {
             reject(new Error('No active webview found'));
@@ -746,14 +746,14 @@ function executeBrowserActionAsync(action) {
     return new Promise((resolve, reject) => {
         const normalizedAction = action.toUpperCase().trim();
         
-        // Safely get tabGroup and webview with better error handling
-        let tabGroup;
+        // Safely get tabGroupAI and webview with better error handling
+        let tabGroupAI;
         let webview;
         
         try {
-            tabGroup = document.querySelector("tab-group");
-            if (tabGroup && tabGroup.getActiveTab) {
-                webview = tabGroup.getActiveTab().webview;
+            tabGroupAI = document.querySelector("tab-group");
+            if (tabGroupAI && tabGroupAI.getActiveTab) {
+                webview = tabGroupAI.getActiveTab().webview;
             } else {
                 throw new Error("Tab group not properly initialized");
             }
@@ -1039,8 +1039,8 @@ function executeBrowserActionAsync(action) {
  * @returns {{url: string, title: string}}
  */
 function getBrowserContext() {
-    let tabGroup = document.querySelector("tab-group");
-    const webview = tabGroup && tabGroup.getActiveTab() ? tabGroup.getActiveTab().webview : null;
+    let tabGroupAI = document.querySelector("tab-group");
+    const webview = tabGroupAI && tabGroupAI.getActiveTab() ? tabGroupAI.getActiveTab().webview : null;
     let url = 'No page loaded or webview not found';
     let title = 'No title';
     
@@ -1110,8 +1110,8 @@ Be helpful, concise, and ONLY use the commands provided. Do not invent new comma
 function executeBrowserAction(action) {
     // Standardize action to uppercase and remove leading/trailing whitespace for reliable parsing
     const normalizedAction = action.toUpperCase().trim();
-    let tabGroup = document.querySelector("tab-group");
-    const webview = tabGroup.getActiveTab().webview;
+    let tabGroupAI = document.querySelector("tab-group");
+    const webview = tabGroupAI.getActiveTab().webview;
     let commandExecuted = false;
 
     // Helper function for webview.executeJavaScript calls

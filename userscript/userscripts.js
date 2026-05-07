@@ -1,1 +1,1 @@
-var userscripts = [""]
+var userscripts = []

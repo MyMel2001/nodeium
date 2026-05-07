@@ -1,12 +1,14 @@
 // Settings functionality for Nodeium
 
 let settingsModal = null;
+
+// Browser settings (stored in file)
 let settings = {
   darkModeEnabled: false,
   defaultBrowser: false
 };
 
-// AI Settings
+// AI Settings (stored in localStorage)
 let aiSettings = {
   apiKey: null,
   apiUrl: 'https://api.openai.com/v1',
@@ -30,7 +32,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadSettings() {
   try {
-    settings = await window.electron.getSettings();
+    const loadedSettings = await window.electron.getSettings();
+    // Only update the properties we care about
+    settings.darkModeEnabled = loadedSettings.darkModeEnabled || false;
+    settings.defaultBrowser = loadedSettings.defaultBrowser || false;
     window.settings = settings; // Update global reference
     updateSettingsUI();
   } catch (error) {
@@ -112,7 +117,11 @@ function setupSettingsListeners() {
         if (tabGroup) {
           const activeTab = tabGroup.getActiveTab();
           if (activeTab && activeTab.webview) {
-            await applySmartDarkMode(activeTab.webview);
+            try {
+              await applySmartDarkMode(activeTab.webview);
+            } catch (error) {
+              console.error('Failed to apply dark mode:', error);
+            }
           }
         }
       } else {
@@ -121,7 +130,11 @@ function setupSettingsListeners() {
         if (tabGroup) {
           const activeTab = tabGroup.getActiveTab();
           if (activeTab && activeTab.webview) {
-            activeTab.webview.reload();
+            try {
+              activeTab.webview.reload();
+            } catch (error) {
+              console.error('Failed to reload:', error);
+            }
           }
         }
       }
@@ -167,8 +180,12 @@ function setupAISettingsListeners() {
 
 async function saveSettings() {
   try {
-    // Save browser settings
-    await window.electron.saveSettings(settings);
+    // Save browser settings - only pass serializable properties
+    const settingsToSave = {
+      darkModeEnabled: settings.darkModeEnabled,
+      defaultBrowser: settings.defaultBrowser
+    };
+    await window.electron.saveSettings(settingsToSave);
 
     // Save AI settings
     saveAISettings();
@@ -382,6 +399,9 @@ function toggleSettings() {
 
 // Check if site is already in dark mode
 function isSiteDarkMode(webview) {
+  if (!webview || !webview.executeJavaScript) {
+    return Promise.resolve(false);
+  }
   return webview.executeJavaScript(`
     (function() {
       const html = document.documentElement;
@@ -389,12 +409,24 @@ function isSiteDarkMode(webview) {
 
       // Check for dark mode attributes
       if (html.getAttribute('data-theme') === 'dark' ||
+          html.getAttribute('data-color-mode') === 'dark' ||
           html.classList.contains('dark-mode') ||
-          html.classList.contains('dark')) {
+          html.classList.contains('dark') ||
+          body.classList.contains('dark-mode') ||
+          body.classList.contains('dark')) {
         return true;
       }
 
-      // Check computed styles
+      // Check for dark mode via CSS variables
+      const computedStyle = window.getComputedStyle(html);
+      const bgVar = computedStyle.getPropertyValue('--color-bg') ||
+                    computedStyle.getPropertyValue('--background-color') ||
+                    computedStyle.getPropertyValue('--bg-color');
+      if (bgVar && (bgVar.includes('#1') || bgVar.includes('#0') || bgVar.includes('rgb(0') || bgVar.includes('rgb(1'))) {
+        return true;
+      }
+
+      // Check computed styles with a delay to ensure CSS is loaded
       const htmlStyle = window.getComputedStyle(html);
       const bodyStyle = window.getComputedStyle(body);
 
@@ -424,22 +456,37 @@ function isSiteDarkMode(webview) {
         return luminance < 128;
       }
 
-      return isDark(htmlRgb) || isDark(bodyRgb);
+      // Also check if text color is light (indicates dark background)
+      function isLight(rgb) {
+        if (!rgb) return false;
+        const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b);
+        return luminance > 128;
+      }
+
+      const htmlColor = parseColor(htmlStyle.color);
+      const bodyColor = parseColor(bodyStyle.color);
+
+      // If background is dark OR text is light, it's likely dark mode
+      return isDark(htmlRgb) || isDark(bodyRgb) || isLight(htmlColor) || isLight(bodyColor);
     })()
-  `);
+  `).catch(() => false);
 }
 
 // Dark mode CSS injection
 function applyDarkModeToWebview(webview) {
+  if (!webview || !webview.insertCSS) {
+    return;
+  }
   const darkModeCSS = `
     html, body {
       background-color: #1a1a1a !important;
       color: #e0e0e0 !important;
     }
 
-    * {
-      background-color: inherit !important;
-      color: inherit !important;
+    /* Only apply to light backgrounds */
+    :not([data-theme="dark"]):not(.dark-mode):not(.dark) {
+      background-color: #1a1a1a !important;
+      color: #e0e0e0 !important;
     }
 
     a {
@@ -483,6 +530,9 @@ function applyDarkModeToWebview(webview) {
 
 // Smart dark mode that only applies to light mode sites
 async function applySmartDarkMode(webview) {
+  if (!webview) {
+    return;
+  }
   try {
     const isDark = await isSiteDarkMode(webview);
 
@@ -502,9 +552,15 @@ document.addEventListener('tab-added', async (event) => {
     const tab = event.detail.tab;
     const webview = tab.webview;
 
-    webview.addEventListener('dom-ready', () => {
-      applySmartDarkMode(webview);
-    });
+    if (webview) {
+      webview.addEventListener('dom-ready', () => {
+        try {
+          applySmartDarkMode(webview);
+        } catch (error) {
+          console.error('Failed to apply dark mode on tab load:', error);
+        }
+      });
+    }
   }
 });
 

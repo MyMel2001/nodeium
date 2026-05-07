@@ -1,6 +1,7 @@
 // Modules to control application life and create native browser window
 const {app, BrowserWindow, session, ipcMain, shell} = require('electron')
 const path = require('path')
+const fs = require('fs')
 const fetch = require("cross-fetch")
 const { ElectronChromeExtensions } = require('electron-chrome-extensions')
 const { ElectronBlocker } = require('@ghostery/adblocker-electron');
@@ -8,10 +9,64 @@ const http = require('http');
 const { createProxy } = require('proxy');
 const NodeiumMCPIntegration = require('./mcp-integration');
 
+// Settings file path
+const settingsPath = path.join(app.getPath('userData'), 'settings.json');
+
+// Default settings
+const defaultSettings = {
+  darkModeEnabled: false,
+  defaultBrowser: false
+};
+
+// Load settings from file
+function loadSettings() {
+  try {
+    if (fs.existsSync(settingsPath)) {
+      const data = fs.readFileSync(settingsPath, 'utf8');
+      return { ...defaultSettings, ...JSON.parse(data) };
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+  return { ...defaultSettings };
+}
+
+// Save settings to file
+function saveSettings(settings) {
+  try {
+    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+    return true;
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    return false;
+  }
+}
+
+// Current settings
+let currentSettings = loadSettings();
+
 ipcMain.on('windowmaker', (event, arg) => {
   createWindow();
 })
 
+// Settings IPC handlers
+ipcMain.handle('get-settings', () => {
+  // Return a plain object to avoid cloning issues
+  return {
+    darkModeEnabled: currentSettings.darkModeEnabled,
+    defaultBrowser: currentSettings.defaultBrowser
+  };
+});
+
+ipcMain.handle('save-settings', (settings) => {
+  // Merge with current settings
+  currentSettings = {
+    darkModeEnabled: settings.darkModeEnabled !== undefined ? settings.darkModeEnabled : currentSettings.darkModeEnabled,
+    defaultBrowser: settings.defaultBrowser !== undefined ? settings.defaultBrowser : currentSettings.defaultBrowser
+  };
+  const success = saveSettings(currentSettings);
+  return success ? currentSettings : null;
+});
 
 ipcMain.handle('set-default-browser', async () => {
   try {
@@ -30,9 +85,9 @@ ipcMain.handle('set-default-browser', async () => {
           else resolve();
         });
       });
-      // Rebuild LaunchServices
+      // Rebuild LaunchServices (without -kill flag which was removed)
       await new Promise((resolve, reject) => {
-        exec('/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -kill -r -domain local -domain system -domain user', (error) => {
+        exec('/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -r -domain local -domain system -domain user', (error) => {
           if (error) reject(error);
           else resolve();
         });
@@ -270,16 +325,6 @@ const regexPatterns = [
     }
   })
 
-  // Inject dark mode CSS if enabled
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          'Content-Security-Policy': ["default-src 'self' *; script-src 'self' 'unsafe-inline' *; style-src 'self' 'unsafe-inline' *"]
-        }
-      });
-  });
-  
   // and load the UI of the app.
   mainWindow.loadFile('index.html')
 

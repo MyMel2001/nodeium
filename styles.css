@@ -25,8 +25,8 @@ body::-webkit-scrollbar {
   margin: 0;
   background-color: #789;
   display: flex;
-  align-items: center;
-  gap: 5px;
+  align-items: center 75%;
+  gap: 0.1vw;
   flex-shrink: 0;
   box-sizing: border-box;
 }
@@ -35,48 +35,52 @@ body::-webkit-scrollbar {
   background-color: #4CAF50; /* Green */
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: .3vh .5vh;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 #goBtn {
   background-color: #4CAF50; /* Green */
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: .3vh .5vh;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 #backBtn {
   background-color: #7a551d;
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: .3vh .5vh;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 #stopBtn {
   background-color: #4f1007; /* Red */
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: .3vh .5vh;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 
@@ -84,24 +88,26 @@ body::-webkit-scrollbar {
   background-color: #01315e; /* Blue */
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: .3vh .5vh;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 #refreshBtn {
   background-color: #507fac; /* Aqua */
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: .3vh .5vh;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 #txtUrl {
@@ -109,12 +115,13 @@ body::-webkit-scrollbar {
   padding: 8px;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   flex: 1;
   margin: 0 5px;
   background-color: #444;
   color: white;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 
@@ -232,12 +239,12 @@ webview::-webkit-scrollbar {
 
 #settingsBtn:hover {
   background-color: #444;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 #closeSidebar:hover {
   background-color: #444;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 .chat-container {
@@ -311,12 +318,13 @@ webview::-webkit-scrollbar {
   background-color: #9C27B0; /* Purple */
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: .3vh .5vh;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 #aiAssistantBtn:hover {
@@ -327,12 +335,13 @@ webview::-webkit-scrollbar {
   background-color: #607D8B; /* Blue Grey */
   border: none;
   color: white;
-  padding: 8px 12px;
+  padding: .3vh .5vh;
   text-align: center;
   text-decoration: none;
-  font-size: 14px;
+  display: inline-block;
+  font-size: 1.75vh;
   cursor: pointer;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 #settingsBtn:hover {
@@ -341,6 +350,7 @@ webview::-webkit-scrollbar {
 
 /* Typing indicator animation */
 .typing-indicator span {
+  display: inline-block;
   animation: typing 1.4s infinite;
 }
 
@@ -415,7 +425,7 @@ webview::-webkit-scrollbar {
 
 #closeSettings:hover {
   background-color: #444;
-  border-radius: 3px;
+  border-radius: 1.2vw;
 }
 
 .settings-body {
@@ -443,7 +453,7 @@ webview::-webkit-scrollbar {
   border-radius: 4px;
   background-color: #333;
   color: white;
-  font-size: 14px;
+  font-size: 1.75vh;
   box-sizing: border-box;
 }
 
@@ -477,7 +487,7 @@ webview::-webkit-scrollbar {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 1.75vh;
   transition: background-color 0.3s ease;
 }
 

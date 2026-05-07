@@ -265,7 +265,6 @@ const toBlock = [
   "*://*.trafficrouter.io/*",
   "*://*.monerominer.rocks/*",
   "*://*.2mdn.net/*",
-  "*.exe",
   "*.vbs",
   "*://*.googlesyndication.*",
   "*pixels*",

@@ -93,8 +93,10 @@ function go() {
     if (url.includes("google.com/search?q") || url.includes("google.com/?q")) {
         const query = new URL(url).searchParams.get('q');
         url = `https://search.sparksammy.com/search.php?q=${query}&p=0&t=0`;
-    } else if (url.includes("youtube.com") || url.includes("youtu.be")) {
-        url = `https://boobtube.nodemixaholic.com`;
+    } else if (url.includes("youtube.com")) {
+        url = url.replace("https://youtube.com", "https://boobtube.nodemixaholic.com");
+    } else if (url.includes("youtu.be")) {
+        url = url.replace("https://youtu.be", "https://boobtube.nodemixaholic.com");
     } else if (url.includes("https://news.google.com")) {
         url = url.replace("https://news.google.com", "https://osn.nodemixaholic.com");
     } else if (url === "https://passwd/") {

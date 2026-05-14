@@ -302,7 +302,7 @@ const regexPatterns = [
 
   session.defaultSession.clearStorageData({
     storages: [
-      'appcache', 'indexeddb', 'shadercache', 'videocache', 'filesystem', 'cachestorage'
+      'appcache', 'indexeddb', 'shadercache', 'videocache', 'filesystem'
     ]
   })  
 

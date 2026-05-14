@@ -299,10 +299,9 @@ const regexPatterns = [
 
     return false;
   }
-
   session.defaultSession.clearStorageData({
     storages: [
-      'appcache', 'indexeddb', 'shadercache', 'videocache', 'filesystem'
+      'appcache', 'indexeddb', 'shadercache', 'videocache', 'filesystem', 'cachestorage'
     ]
   })  
 
